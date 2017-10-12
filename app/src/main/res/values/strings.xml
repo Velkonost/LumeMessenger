@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Lume</string>
+    <integer name="com_vk_sdk_AppId">6215463</integer>
+
+</resources>
