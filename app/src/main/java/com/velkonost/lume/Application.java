@@ -12,6 +12,9 @@ import com.vk.sdk.VKSdk;
 
 public class Application extends android.app.Application {
 
+    /**
+     * ВКонтакте
+     */
     VKAccessTokenTracker vkAccessTokenTracker = new VKAccessTokenTracker() {
         @Override
         public void onVKAccessTokenChanged(VKAccessToken oldToken, VKAccessToken newToken) {
@@ -28,6 +31,7 @@ public class Application extends android.app.Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
         vkAccessTokenTracker.startTracking();
         VKSdk.initialize(this);
     }

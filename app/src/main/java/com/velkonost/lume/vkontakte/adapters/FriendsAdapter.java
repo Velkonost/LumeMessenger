@@ -11,58 +11,47 @@ import com.velkonost.lume.R;
 import com.vk.sdk.api.model.VKApiDialog;
 import com.vk.sdk.api.model.VKList;
 
-import java.util.ArrayList;
-
 /**
- * ВРЕМЕННО
+ * Адаптер списка друзей авторизованного пользователя
  */
 
-public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder> {
+public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHolder> {
 
-    private ArrayList<String> users, messages;
     private Context ctx;
     private VKList<VKApiDialog> list;
 
-
-
-    public CustomAdapter(Context ctx) {
+    public FriendsAdapter(Context ctx, VKList<VKApiDialog> list) {
         this.ctx = ctx;
+        this.list = list;
     }
-
-    ///
 
     @Override
     public ViewHolder onCreateViewHolder(final ViewGroup parent, final int viewType) {
-        final View view = LayoutInflater.from(ctx).inflate(R.layout.item_list, parent, false);
+        final View view = LayoutInflater.from(ctx).inflate(R.layout.item_vkontakte_friend, parent, false);
         return new ViewHolder(view);
     }
 
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
-
-        holder.txt.setText("0");
-        holder.txt2.setText("1");
-
-
+        holder.txt.setText(String.valueOf(list.get(position)));
     }
 
     @Override
     public int getItemCount() {
-        return 3;
+        return list.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder extends RecyclerView.ViewHolder {
 
-        public TextView txt;
-        public TextView txt2;
+        /**
+         * Полное имя пользователя
+         */
+        TextView txt;
 
-        public ViewHolder(final View itemView) {
+        ViewHolder(final View itemView) {
             super(itemView);
             txt = (TextView) itemView.findViewById(R.id.txt_vp_item_list);
-            txt2 = (TextView) itemView.findViewById(R.id.txt_vp_item_list2);
         }
     }
-    ///
-
 }

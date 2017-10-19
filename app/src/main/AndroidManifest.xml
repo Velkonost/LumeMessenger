@@ -22,10 +22,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".vkontakte.activities.MainActivity"/>
-
-
-
-        <activity android:name=".TestActivity"/>
+        <activity android:name=".vkontakte.activities.MessagesActivity"/>
+        <activity android:name=".AndroidDatabaseManager"/>
 
 
     </application>
