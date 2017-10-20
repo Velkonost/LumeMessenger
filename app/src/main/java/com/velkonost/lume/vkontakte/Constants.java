@@ -18,6 +18,7 @@ public class Constants {
         public static String GET_PROFILE_INFO = "account.getProfileInfo";
         public static String GET_MESSAGES = "messages.getHistory";
         public static String SEND_MESSAGE = "messages.send";
+        public static String GET_LONG_POLL_SERVER = "messages.getLongPollServer";
 
     }
 

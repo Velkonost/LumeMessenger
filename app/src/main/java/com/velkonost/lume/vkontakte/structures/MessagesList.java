@@ -127,6 +127,22 @@ public class MessagesList {
         this.bodies = bodies;
     }
 
+    public void setIds(ArrayList<String> ids) {
+        this.ids = ids;
+    }
+
+    public void setFwdMessagesBodiesLists(ArrayList<ArrayList<String>> fwdMessagesBodiesLists) {
+        this.fwdMessagesBodiesLists = fwdMessagesBodiesLists;
+    }
+
+    public void setFwdMessagesSendersLists(ArrayList<ArrayList<String>> fwdMessagesSendersLists) {
+        this.fwdMessagesSendersLists = fwdMessagesSendersLists;
+    }
+
+    public void setFwdMessagesDatesLists(ArrayList<ArrayList<String>> fwdMessagesDatesLists) {
+        this.fwdMessagesDatesLists = fwdMessagesDatesLists;
+    }
+
     public void setDates(ArrayList<String> dates) {
         this.dates = dates;
     }

@@ -26,6 +26,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         this.ctx = ctx;
     }
 
+    public void setMessagesList(MessagesList messagesList) {
+        this.messagesList = messagesList;
+    }
+
     @Override
     public ViewHolder onCreateViewHolder(final ViewGroup parent, final int viewType) {
         final View view = LayoutInflater.from(ctx).inflate(R.layout.item_vkontakte_message, parent, false);

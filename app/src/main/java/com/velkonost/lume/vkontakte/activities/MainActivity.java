@@ -96,6 +96,8 @@ public class MainActivity extends AppCompatActivity {
      */
     private long timeDelay = 0;
 
+    private String ts, pts;
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -119,7 +121,6 @@ public class MainActivity extends AppCompatActivity {
                 JSONObject list = response.json;
                 try {
                     JSONObject a = (JSONObject) list.get(RESPONSE);
-                    Log.i(DEBUG_TAG, String.valueOf(a.getString(FIRST_NAME) + " " + a.getString(LAST_NAME)));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -146,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
             if (dialogTitle[0].equals("")) {
                 VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, msg.message.user_id));
 
-                request.executeSyncWithListener(new VKRequest.VKRequestListener() {
+                request.executeWithListener(new VKRequest.VKRequestListener() {
                     @Override
                     public void onComplete(VKResponse response) {
                         super.onComplete(response);
@@ -251,7 +252,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setNavigationTabBarConfiguration(NavigationTabBar navigationTabBar) {
-        navigationTabBar.setViewPager(viewPager, 2);
+        navigationTabBar.setViewPager(viewPager, 0);
         //IMPORTANT: ENABLE SCROLL BEHAVIOUR IN COORDINATOR LAYOUT
         navigationTabBar.setBehaviorEnabled(true);
 
@@ -356,6 +357,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void initUI() {
 
+        viewPager.setOffscreenPageLimit(3);
         viewPager.setAdapter(new PagerAdapter() {
             /**
              * Кол-во вкладок

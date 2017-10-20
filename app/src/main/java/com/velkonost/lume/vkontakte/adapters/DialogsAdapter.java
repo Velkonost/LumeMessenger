@@ -3,7 +3,6 @@ package com.velkonost.lume.vkontakte.adapters;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
 
-import static com.velkonost.lume.Constants.DEBUG_TAG;
 import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.AMOUNT_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.COUNT;
@@ -167,7 +165,6 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
                  * Получение "count" последних сообщений диалога
                  */
                 VKRequest request = new VKRequest(GET_MESSAGES, VKParameters.from(typeOfDialog, id, COUNT, AMOUNT_MESSAGES));
-                Log.i(DEBUG_TAG, request.toString());
                 request.executeWithListener(new VKRequest.VKRequestListener() {
                     @Override
                     public void onComplete(VKResponse response) {

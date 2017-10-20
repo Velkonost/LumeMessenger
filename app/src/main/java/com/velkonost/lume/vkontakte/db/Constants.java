@@ -26,6 +26,11 @@ class Constants {
          */
         static final String DIALOG_LAST_MESSAGE = "vkontakteDialogLastMessageTable";
 
+        /**
+         * Таблица для хранения пар ключ-значение
+         */
+        static final String META_DATA = "vkontakteMetaDataTable";
+
     }
 
     static final String TABLE_PREFIX = "lume_";

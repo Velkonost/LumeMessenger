@@ -16,6 +16,7 @@ import static com.velkonost.lume.vkontakte.db.Constants.DB_NAME;
 import static com.velkonost.lume.vkontakte.db.Constants.DB_TABLES.DIALOG_LAST_MESSAGE;
 import static com.velkonost.lume.vkontakte.db.Constants.DB_TABLES.FWD_MESSAGES;
 import static com.velkonost.lume.vkontakte.db.Constants.DB_TABLES.MESSAGES;
+import static com.velkonost.lume.vkontakte.db.Constants.DB_TABLES.META_DATA;
 import static com.velkonost.lume.vkontakte.db.Constants.DB_TABLES.USERS;
 import static com.velkonost.lume.vkontakte.db.Constants.TABLE_PREFIX;
 
@@ -39,6 +40,7 @@ public class DBHelper extends SQLiteOpenHelper{
         Log.i("LOG_DB", "--- onCreate database ---");
 
         createUsersTable(db);
+        createMetaDataTable(db);
     }
 
     /**
@@ -49,6 +51,16 @@ public class DBHelper extends SQLiteOpenHelper{
                 + "id integer primary key autoincrement,"
                 + "nickname text,"
                 + "user_id text" + ");");
+    }
+
+    /**
+     * Таблица для пар ключ/значение
+     */
+    private void createMetaDataTable(SQLiteDatabase db) {
+        db.execSQL("create table if not exists " + TABLE_PREFIX + META_DATA + " ("
+                + "id integer primary key autoincrement,"
+                + "meta_key text,"
+                + "meta_value text" + ");");
     }
 
     /**
@@ -92,9 +104,7 @@ public class DBHelper extends SQLiteOpenHelper{
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
-    }
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {}
 
     /**
      * Добавление новой строки в таблицу пользователе
@@ -102,7 +112,6 @@ public class DBHelper extends SQLiteOpenHelper{
      * @param nickname - полное имя пользователя
      */
     public void insertUsers(String id, String nickname) {
-
         if (this.getWritableDatabase().query(TABLE_PREFIX + USERS,
                 null,
                 "user_id = ?",
@@ -113,6 +122,46 @@ public class DBHelper extends SQLiteOpenHelper{
             cvColumn.put("user_id", id);
             this.getWritableDatabase().insert(TABLE_PREFIX + USERS, null, cvColumn);
         }
+    }
+
+    /**
+     * Добавление/изменение строки в таблице для хранения пар ключ/значение
+     * @param key - ключ
+     * @param value - значение
+     */
+    public void updateMetaData(String key, String value) {
+        ContentValues cvColumn = new ContentValues();
+        cvColumn.put("meta_key", key);
+        cvColumn.put("meta_value", value);
+        if (this.getWritableDatabase().query(TABLE_PREFIX + META_DATA,
+                null,
+                "meta_key = ?",
+                new String[] {key},
+                null, null, null).getCount() == 0) {
+            this.getWritableDatabase().insert(TABLE_PREFIX + META_DATA, null, cvColumn);
+        } else {
+            this.getWritableDatabase().update(TABLE_PREFIX + META_DATA, cvColumn, "meta_key = ?",
+                    new String[]{key});
+        }
+    }
+
+    /**
+     * Получение значение по ключу из таблицы для хранения пар ключ/значение
+     * @param key - ключ
+     * @return - значение
+     */
+    public String getValueFromMetaData(String key) {
+        Cursor c = this.getWritableDatabase().query(TABLE_PREFIX + META_DATA,
+                null,
+                "meta_key = ?",
+                new String[] {key},
+                null, null, null);
+
+        if (c.moveToFirst()) {
+            int valueIndex = c.getColumnIndex("meta_value");
+            return c.getString(valueIndex);
+        }
+        return " ";
     }
 
     /**
