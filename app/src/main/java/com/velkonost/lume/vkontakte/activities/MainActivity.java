@@ -96,8 +96,6 @@ public class MainActivity extends AppCompatActivity {
      */
     private long timeDelay = 0;
 
-    private String ts, pts;
-
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -133,7 +131,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    //!!! dbHelper need
     /**
      * Составление списка диалогов с их последним сообщением
      */
@@ -635,9 +632,6 @@ public class MainActivity extends AppCompatActivity {
         }, timeDelay += 350);
     }
 
-//    private void addNewMessageInDB(String chatId, VKApiMessage message, String nickname) {
-//        dbHelper.insertMessages(chatId, String.valueOf(message.id), message.body, message.out, nickname, String.valueOf(message.date));
-//    }
 
     /**
      * Получение имени и фимилии пользователя по его идентификатору
@@ -689,7 +683,7 @@ public class MainActivity extends AppCompatActivity {
                 /**
                  * Инициализация таблицы пользователей в локальной БД при успешной авторизации
                  */
-                initializeUsersTable();
+//                initializeUsersTable();
 //                initializeMessagesTable();
                 /**
                  * Формирование пользовательского интерфейса после успешной авторизации

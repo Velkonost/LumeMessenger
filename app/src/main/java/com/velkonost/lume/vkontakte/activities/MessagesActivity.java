@@ -42,8 +42,11 @@ import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_LONG_POLL_S
 import static com.velkonost.lume.vkontakte.Constants.API_METHODS.SEND_MESSAGE;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIELDS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ID;
+import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.IS_NEED_PTS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.PTS;
+import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.PTS_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.TS;
+import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.TS_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_BODIES_LISTS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_DATES_LISTS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_SENDERS_LISTS;
@@ -144,8 +147,8 @@ public class MessagesActivity extends AppCompatActivity {
         id = getIntent().getStringExtra(ID);
         dbHelper = new DBHelper(this);
 
-        ts = dbHelper.getValueFromMetaData("ts");
-        pts = dbHelper.getValueFromMetaData("pts");
+        ts = dbHelper.getValueFromMetaData(TS_MESSAGES);
+        pts = dbHelper.getValueFromMetaData(PTS_MESSAGES);
 
         Log.i(DEBUG_TAG, ts);
         Log.i(DEBUG_TAG, pts);
@@ -254,7 +257,7 @@ public class MessagesActivity extends AppCompatActivity {
     }
 
     private void connectLongPollServer() {
-        VKRequest requestThisProfileInfo = new VKRequest(GET_LONG_POLL_SERVER, VKParameters.from("need_pts", true));
+        VKRequest requestThisProfileInfo = new VKRequest(GET_LONG_POLL_SERVER, VKParameters.from(IS_NEED_PTS, true));
         requestThisProfileInfo.executeWithListener(new VKRequest.VKRequestListener() {
             @Override
             public void onComplete(VKResponse response) {
@@ -262,11 +265,11 @@ public class MessagesActivity extends AppCompatActivity {
                 JSONObject list = response.json;
                 try {
                     JSONObject a = (JSONObject) list.get(RESPONSE);
-                    ts = a.getString("ts");
-                    pts = a.getString("pts");
+                    ts = a.getString(TS);
+                    pts = a.getString(PTS);
 
-                    dbHelper.updateMetaData("ts", ts);
-                    dbHelper.updateMetaData("pts", pts);
+                    dbHelper.updateMetaData(TS_MESSAGES, ts);
+                    dbHelper.updateMetaData(PTS_MESSAGES, pts);
 
                 } catch (JSONException e) {
                     e.printStackTrace();

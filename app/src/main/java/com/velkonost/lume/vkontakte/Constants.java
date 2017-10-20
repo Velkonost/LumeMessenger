@@ -37,8 +37,15 @@ public class Constants {
         public static String FIRST_NAME = "first_name";
         public static String LAST_NAME = "last_name";
         public static String DOMAIN = "domain";
+
         public static String TS = "ts";
+        public static String TS_MESSAGES = "ts_messages";
+        public static String TS_DIALOGS = "ts_dialogs";
         public static String PTS = "pts";
+        public static String PTS_MESSAGES = "pts_messages";
+        public static String PTS_DIALOGS = "pts_dialogs";
+
+        public static String IS_NEED_PTS = "need_pts";
     }
 
     public static final class RESPONSE_FIELDS {
