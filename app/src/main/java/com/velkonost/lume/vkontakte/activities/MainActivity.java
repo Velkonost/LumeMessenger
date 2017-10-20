@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
             if (dialogTitle[0].equals("")) {
                 VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, msg.message.user_id));
 
-                request.executeWithListener(new VKRequest.VKRequestListener() {
+                request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                     @Override
                     public void onComplete(VKResponse response) {
                         super.onComplete(response);
@@ -398,7 +398,7 @@ public class MainActivity extends AppCompatActivity {
                          */
 
                         /**
-                         * Получение последних 10 диалогов с их последними сообщениями
+                         * Получение последних "count" диалогов с их последними сообщениями
                          */
                         VKRequest requestMessages = VKApi.messages().getDialogs(VKParameters.from(COUNT, AMOUNT_DIALOGS));
                         requestMessages.executeWithListener(new VKRequest.VKRequestListener() {

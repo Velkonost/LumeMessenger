@@ -85,7 +85,6 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
 
-
         holder.dialogName.setText(users.get(position));
         holder.lastMessage.setText(messages.get(position));
 
