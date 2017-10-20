@@ -1,4 +1,4 @@
-package com.velkonost.lume.vkontakte.structures;
+package com.velkonost.lume.vkontakte.models;
 
 import java.util.ArrayList;
 

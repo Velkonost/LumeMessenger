@@ -15,7 +15,7 @@ import android.widget.EditText;
 import com.velkonost.lume.R;
 import com.velkonost.lume.vkontakte.adapters.MessagesAdapter;
 import com.velkonost.lume.vkontakte.db.DBHelper;
-import com.velkonost.lume.vkontakte.structures.MessagesList;
+import com.velkonost.lume.vkontakte.models.MessagesList;
 import com.vk.sdk.api.VKApi;
 import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKError;
@@ -37,9 +37,13 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import static com.velkonost.lume.Constants.DEBUG_TAG;
+import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_LONG_POLL_MESSAGES_HISTORY;
 import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_LONG_POLL_SERVER;
 import static com.velkonost.lume.vkontakte.Constants.API_METHODS.SEND_MESSAGE;
+import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIELDS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ID;
+import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.PTS;
+import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.TS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_BODIES_LISTS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_DATES_LISTS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_SENDERS_LISTS;
@@ -48,8 +52,10 @@ import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_DATE
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_IDS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_IS_OUT;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_SENDERS;
+import static com.velkonost.lume.vkontakte.Constants.REFRESH_MESSAGES_PERIOD;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.CHAT_ID;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.ITEMS;
+import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.RESPONSE;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.USER_ID;
 
@@ -159,12 +165,18 @@ public class MessagesActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String typeOfDialog = Integer.parseInt(id) < 100000000 ? CHAT_ID : USER_ID;
-                VKRequest request = new VKRequest(SEND_MESSAGE, VKParameters.from(typeOfDialog, id, VKApiConst.MESSAGE, editNewMessage.getText().toString()));
+
+                String newMessageBody = editNewMessage.getText().toString();
+                editNewMessage.setText("");
+
+                VKRequest request = new VKRequest(SEND_MESSAGE, VKParameters.from(typeOfDialog, id, VKApiConst.MESSAGE, newMessageBody));
 
                 request.executeWithListener(new VKRequest.VKRequestListener() {
                     @Override
                     public void onComplete(VKResponse response) {
                         super.onComplete(response);
+                        refreshMessages();
+                        connectLongPollServer();
                     }
                 });
             }
@@ -173,11 +185,11 @@ public class MessagesActivity extends AppCompatActivity {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                timer = new TimerCheckMessagesState(100000000, 5000);
+                timer = new TimerCheckMessagesState(1000000000, REFRESH_MESSAGES_PERIOD);
                 timer.start();
 
             }
-        }, 5000);
+        }, REFRESH_MESSAGES_PERIOD);
     }
 
     /**
@@ -209,7 +221,11 @@ public class MessagesActivity extends AppCompatActivity {
      */
     private void initializeMessagesList() {
         messagesList =
-                new MessagesList(messagesIds, messagesBodies, messagesDates, messagesSenders, messagesIsOut, fwdMessagesBodiesLists, fwdMessagesDatesLists, fwdMessagesSendersLists);
+                new MessagesList(
+                        messagesIds, messagesBodies,
+                        messagesDates, messagesSenders, messagesIsOut,
+                        fwdMessagesBodiesLists, fwdMessagesDatesLists, fwdMessagesSendersLists
+                );
 
     }
 
@@ -354,7 +370,7 @@ public class MessagesActivity extends AppCompatActivity {
         }
 
     private void refreshMessages() {
-        VKRequest request = new VKRequest("messages.getLongPollHistory", VKParameters.from("ts", ts, "pts", pts, "fields", ""));
+        VKRequest request = new VKRequest(GET_LONG_POLL_MESSAGES_HISTORY, VKParameters.from(TS, ts, PTS, pts, FIELDS, ""));
         request.executeWithListener(new VKRequest.VKRequestListener() {
             @Override
             public void onComplete(VKResponse response) {
@@ -370,7 +386,7 @@ public class MessagesActivity extends AppCompatActivity {
 
                 try {
                     jsonResponse = (JSONObject) response.json.get(RESPONSE);
-                    messagesJSONArray = jsonResponse.getJSONObject("messages").getJSONArray(ITEMS);
+                    messagesJSONArray = jsonResponse.getJSONObject(MESSAGES).getJSONArray(ITEMS);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
