@@ -256,6 +256,9 @@ public class MessagesActivity extends AppCompatActivity {
         );
     }
 
+    /**
+     * Получение данных, необходимых для обновления списка сообщений
+     */
     private void connectLongPollServer() {
         VKRequest requestThisProfileInfo = new VKRequest(GET_LONG_POLL_SERVER, VKParameters.from(IS_NEED_PTS, true));
         requestThisProfileInfo.executeWithListener(new VKRequest.VKRequestListener() {
@@ -372,6 +375,9 @@ public class MessagesActivity extends AppCompatActivity {
             return sdf.format(date).substring(0, 19);
         }
 
+    /**
+     * Обновление списка сообщений
+     */
     private void refreshMessages() {
         VKRequest request = new VKRequest(GET_LONG_POLL_MESSAGES_HISTORY, VKParameters.from(TS, ts, PTS, pts, FIELDS, ""));
         request.executeWithListener(new VKRequest.VKRequestListener() {
@@ -452,6 +458,11 @@ public class MessagesActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Получение идентификатора диалога по сообщению
+     * @param jsonMessage - json-объект сообщения
+     * @return - идентификатор диалога
+     */
     private String getDialogIdOfNewMessage(JSONObject jsonMessage) {
         try {
             return jsonMessage.getString(CHAT_ID);
@@ -465,6 +476,9 @@ public class MessagesActivity extends AppCompatActivity {
         return null;
     }
 
+    /**
+     * Установка полученных данных
+     */
     private void setNewMessagesData() {
         messagesList.setIds(messagesIds);
         messagesList.setBodies(messagesBodies);
