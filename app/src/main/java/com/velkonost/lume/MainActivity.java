@@ -72,6 +72,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        ((Button) findViewById(R.id.inst)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent instAct = new Intent(MainActivity.this, com.velkonost.lume.instagram.activities.MainActivity.class);
+                startActivity(instAct);
+            }
+        });
     }
 
     @Override
