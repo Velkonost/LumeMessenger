@@ -17,6 +17,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    repositories {
+        mavenCentral()
+        maven { url 'https://dl.bintray.com/sayyam/maven' }
+    }
+
 }
 
 dependencies {
@@ -24,6 +30,7 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
+
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:design:25.3.1'
     compile 'com.android.support:cardview-v7:25.3.1'
@@ -32,6 +39,8 @@ dependencies {
 
     compile 'com.vk:androidsdk:+' //SDK Vkontakte
     compile 'devlight.io:navigationtabbar:1.2.5' //NavigationTabBar - bottom navigation: https://github.com/Devlight/NavigationTabBar
+    compile 'com.github.sayyam:instagramapi:0.1.0' //SDK Instagram
+
 
     testCompile 'junit:junit:4.12'
 }

@@ -25,6 +25,12 @@
         <activity android:name=".vkontakte.activities.MessagesActivity"/>
         <activity android:name=".AndroidDatabaseManager"/>
 
+        <meta-data
+            android:name="com.instagram.instagramapi.InstagramAppClientId"
+            android:value="	5e674531494d40e096c2e86722d91baa" />
+        <meta-data
+            android:name="com.instagram.instagramapi.InstagramAppRedirectURL"
+            android:value="http://velkonost.ru/auth/" />
 
     </application>
 
