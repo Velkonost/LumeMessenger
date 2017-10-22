@@ -312,7 +312,7 @@ public class MainActivity extends AppCompatActivity {
             public void onComplete(VKResponse response) {
                 super.onComplete(response);
 
-                VKList list = (VKList) response.parsedModel;
+                VKList list = (VKList)  response.parsedModel;
                 for (int i = 0; i < list.size(); i++) {
                     try {
                         /**

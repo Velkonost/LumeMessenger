@@ -5,7 +5,7 @@ android {
     buildToolsVersion "25.0.3"
     defaultConfig {
         applicationId "com.velkonost.lume"
-        minSdkVersion 16
+        minSdkVersion 19
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
@@ -41,6 +41,8 @@ dependencies {
     compile 'devlight.io:navigationtabbar:1.2.5' //NavigationTabBar - bottom navigation: https://github.com/Devlight/NavigationTabBar
     compile 'com.github.sayyam:instagramapi:0.1.0' //SDK Instagram
 
+    compile 'com.squareup.picasso:picasso:2.5.2' //Picasso - Upload Imgs
+    compile 'de.hdodenhof:circleimageview:2.2.0' // Circle ImageView
 
     testCompile 'junit:junit:4.12'
 }

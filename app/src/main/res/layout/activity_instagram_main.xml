@@ -3,4 +3,9 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <com.instagram.instagramapi.widgets.InstagramLoginButton
+        android:id="@+id/instagramLoginButton"
+        android:layout_width="200dp"
+        android:layout_height="55dp"
+        android:text="Login Button" />
 </LinearLayout>
