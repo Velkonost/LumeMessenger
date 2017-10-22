@@ -71,6 +71,20 @@ public class MessagesList {
         this.senders = senders;
     }
 
+    public void addMessage(String id, String body, String date, String sender, String isOut,
+                            ArrayList<String> fwdMessagesBodies, ArrayList<String> fwdMessagesSenders,
+                            ArrayList<String> fwdMessagesDates) {
+        this.ids.add(id);
+        this.bodies.add(body);
+        this.dates.add(date);
+        this.senders.add(sender);
+        this.isOut.add(isOut);
+
+        this.fwdMessagesBodiesLists.add(fwdMessagesBodies);
+        this.fwdMessagesDatesLists.add(fwdMessagesDates);
+        this.fwdMessagesSendersLists.add(fwdMessagesSenders);
+    }
+
     public int getMessagesAmount() {
         return bodies.size();
     }
@@ -78,6 +92,7 @@ public class MessagesList {
     public String getMessageBodyByPosition(int position) {
         return bodies.get(position);
     }
+
     public String getMessageIdsByPosition(int position) {
         return ids.get(position);
     }
@@ -120,7 +135,7 @@ public class MessagesList {
     }
 
     public String getMessageIsOutByPosition(int position) {
-        return isOut.get(position);
+        return String.valueOf(isOut.get(position));
     }
 
     public void setBodies(ArrayList<String> bodies) {

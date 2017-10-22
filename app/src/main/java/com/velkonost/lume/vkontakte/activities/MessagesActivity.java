@@ -159,7 +159,7 @@ public class MessagesActivity extends AppCompatActivity {
         recyclerView = (RecyclerView) findViewById(R.id.rv);
         setRecyclerViewConfiguration(recyclerView);
 
-        recyclerView.setAdapter(new MessagesAdapter(messagesList, MessagesActivity.this));
+        recyclerView.setAdapter(new MessagesAdapter(messagesList, MessagesActivity.this, id));
 
         /**
          * Отправка нового сообщения

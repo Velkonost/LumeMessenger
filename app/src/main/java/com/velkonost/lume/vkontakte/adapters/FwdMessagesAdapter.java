@@ -38,6 +38,8 @@ class FwdMessagesAdapter extends RecyclerView.Adapter<FwdMessagesAdapter.ViewHol
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
 
+
+
         holder.userName.setText(messagesList.getMessageSendersByPosition(position));
         holder.messageBody.setText(messagesList.getMessageBodyByPosition(position));
         holder.messageDate.setText(messagesList.getMessageDateByPosition(position));
