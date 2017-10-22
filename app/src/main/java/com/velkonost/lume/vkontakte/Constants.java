@@ -6,6 +6,7 @@ package com.velkonost.lume.vkontakte;
 
 public class Constants {
 
+    public static final int REFRESH_MESSAGES_PERIOD = 2000;
 
     public static final class VIEW_PAGER_PAGES {
         public static String DIALOGS_PAGE = "dialogs";
@@ -19,6 +20,7 @@ public class Constants {
         public static String GET_MESSAGES = "messages.getHistory";
         public static String SEND_MESSAGE = "messages.send";
         public static String GET_LONG_POLL_SERVER = "messages.getLongPollServer";
+        public static String GET_LONG_POLL_MESSAGES_HISTORY = "messages.getLongPollHistory";
 
     }
 
@@ -29,17 +31,28 @@ public class Constants {
 
         public static int AMOUNT_DIALOGS = 10;
         public static int AMOUNT_MESSAGES = 10;
+
         public static String ID = "id";
         public static String HINTS = "hints";
         public static String FIRST_NAME = "first_name";
         public static String LAST_NAME = "last_name";
         public static String DOMAIN = "domain";
+
+        public static String TS = "ts";
+        public static String TS_MESSAGES = "ts_messages";
+        public static String TS_DIALOGS = "ts_dialogs";
+        public static String PTS = "pts";
+        public static String PTS_MESSAGES = "pts_messages";
+        public static String PTS_DIALOGS = "pts_dialogs";
+
+        public static String IS_NEED_PTS = "need_pts";
     }
 
     public static final class RESPONSE_FIELDS {
         public static final String RESPONSE = "response";
         public static final String ITEMS = "items";
         public static final String MESSAGE = "message";
+        public static final String MESSAGES = "messages";
         public static final String CHAT_ID = "chat_id";
         public static final String USER_ID = "user_id";
     }

@@ -1,6 +1,5 @@
 package com.velkonost.lume.vkontakte.activities;
 
-import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,17 +12,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.velkonost.lume.R;
 import com.velkonost.lume.vkontakte.adapters.CustomAdapter;
 import com.velkonost.lume.vkontakte.adapters.DialogsAdapter;
 import com.velkonost.lume.vkontakte.adapters.FriendsAdapter;
 import com.velkonost.lume.vkontakte.db.DBHelper;
-import com.vk.sdk.VKAccessToken;
-import com.vk.sdk.VKCallback;
 import com.vk.sdk.VKScope;
-import com.vk.sdk.VKSdk;
 import com.vk.sdk.api.VKApi;
 import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKError;
@@ -96,8 +91,6 @@ public class MainActivity extends AppCompatActivity {
      */
     private long timeDelay = 0;
 
-    private String ts, pts;
-
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -133,7 +126,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    //!!! dbHelper need
     /**
      * Составление списка диалогов с их последним сообщением
      */
@@ -147,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
             if (dialogTitle[0].equals("")) {
                 VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, msg.message.user_id));
 
-                request.executeWithListener(new VKRequest.VKRequestListener() {
+                request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                     @Override
                     public void onComplete(VKResponse response) {
                         super.onComplete(response);
@@ -385,98 +377,91 @@ public class MainActivity extends AppCompatActivity {
                 final RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.rv);
                 setRecyclerViewConfiguration(recyclerView);
 
-                if(!VKSdk.isLoggedIn()) {
+                if (position == 0) {
                     /**
-                     * Если пользователь еще не авторизован - перебрасывает на авторизацию
+                     * Вкладка диалогов
                      */
-                    VKSdk.login(MainActivity.this, scope);
-                } else {
 
-                    if (position == 0) {
-                        /**
-                         * Вкладка диалогов
-                         */
-
-                        /**
-                         * Получение последних 10 диалогов с их последними сообщениями
-                         */
-                        VKRequest requestMessages = VKApi.messages().getDialogs(VKParameters.from(COUNT, AMOUNT_DIALOGS));
-                        requestMessages.executeWithListener(new VKRequest.VKRequestListener() {
-                            @Override
-                            public void onComplete(VKResponse response) {
-                                super.onComplete(response);
-                                try {
-                                    /**
-                                     * Установка адаптера диалогов
-                                     */
-                                    recyclerView.setAdapter(getDialogsAdapter(response));
-                                } catch (JSONException e) {
-                                    reportJSONException();
-                                    e.printStackTrace();
-                                }
-                            }
-
-                            @Override
-                            public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
-                                super.attemptFailed(request, attemptNumber, totalAttempts);
-                            }
-
-                            @Override
-                            public void onError(VKError error) {
-                                super.onError(error);
-                            }
-
-                            @Override
-                            public void onProgress(VKRequest.VKProgressType progressType, long bytesLoaded, long bytesTotal) {
-                                super.onProgress(progressType, bytesLoaded, bytesTotal);
-                            }
-                        });
-
-                    } else if (position == 1) {
-                        /**
-                         * Вкладка друзей
-                         */
-
-                        /**
-                         * Получение необходимой информации о друзьях, сортировка в порядке важности
-                         */
-                        final VKRequest requestFriends = VKApi.friends().get(VKParameters.from(
-                                FIELDS, FIRST_NAME + COMMA + LAST_NAME + COMMA + DOMAIN,
-                                ORDER, HINTS));
-
-                        requestFriends.executeWithListener(new VKRequest.VKRequestListener() {
-                            @Override
-                            public void onComplete(VKResponse response) {
-                                super.onComplete(response);
+                    /**
+                     * Получение последних "count" диалогов с их последними сообщениями
+                     */
+                    VKRequest requestMessages = VKApi.messages().getDialogs(VKParameters.from(COUNT, AMOUNT_DIALOGS));
+                    requestMessages.executeWithListener(new VKRequest.VKRequestListener() {
+                        @Override
+                        public void onComplete(VKResponse response) {
+                            super.onComplete(response);
+                            try {
                                 /**
-                                 * Установка адаптера друзей
+                                 * Установка адаптера диалогов
                                  */
-                                recyclerView.setAdapter(getFriendsAdapter(response));
+                                recyclerView.setAdapter(getDialogsAdapter(response));
+                            } catch (JSONException e) {
+                                reportJSONException();
+                                e.printStackTrace();
                             }
+                        }
 
-                            @Override
-                            public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
-                                super.attemptFailed(request, attemptNumber, totalAttempts);
-                            }
+                        @Override
+                        public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
+                            super.attemptFailed(request, attemptNumber, totalAttempts);
+                        }
 
-                            @Override
-                            public void onError(VKError error) {
-                                super.onError(error);
-                                Log.i(DEBUG_TAG, String.valueOf(error));
-                            }
+                        @Override
+                        public void onError(VKError error) {
+                            super.onError(error);
+                        }
 
-                            @Override
-                            public void onProgress(VKRequest.VKProgressType progressType, long bytesLoaded, long bytesTotal) {
-                                super.onProgress(progressType, bytesLoaded, bytesTotal);
-                            }
-                        });
-                    } else {
-                        /**
-                         * Вкладка настроек (?)
-                         */
-                        recyclerView.setAdapter(new CustomAdapter(MainActivity.this));
-                    }
+                        @Override
+                        public void onProgress(VKRequest.VKProgressType progressType, long bytesLoaded, long bytesTotal) {
+                            super.onProgress(progressType, bytesLoaded, bytesTotal);
+                        }
+                    });
+
+                } else if (position == 1) {
+                    /**
+                     * Вкладка друзей
+                     */
+
+                    /**
+                     * Получение необходимой информации о друзьях, сортировка в порядке важности
+                     */
+                    final VKRequest requestFriends = VKApi.friends().get(VKParameters.from(
+                            FIELDS, FIRST_NAME + COMMA + LAST_NAME + COMMA + DOMAIN,
+                            ORDER, HINTS));
+
+                    requestFriends.executeWithListener(new VKRequest.VKRequestListener() {
+                        @Override
+                        public void onComplete(VKResponse response) {
+                            super.onComplete(response);
+                            /**
+                             * Установка адаптера друзей
+                             */
+                            recyclerView.setAdapter(getFriendsAdapter(response));
+                        }
+
+                        @Override
+                        public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
+                            super.attemptFailed(request, attemptNumber, totalAttempts);
+                        }
+
+                        @Override
+                        public void onError(VKError error) {
+                            super.onError(error);
+                            Log.i(DEBUG_TAG, String.valueOf(error));
+                        }
+
+                        @Override
+                        public void onProgress(VKRequest.VKProgressType progressType, long bytesLoaded, long bytesTotal) {
+                            super.onProgress(progressType, bytesLoaded, bytesTotal);
+                        }
+                    });
+                } else {
+                    /**
+                     * Вкладка настроек (?)
+                     */
+                    recyclerView.setAdapter(new CustomAdapter(MainActivity.this));
                 }
+
 
                 container.addView(view);
                 return view;
@@ -635,9 +620,6 @@ public class MainActivity extends AppCompatActivity {
         }, timeDelay += 350);
     }
 
-//    private void addNewMessageInDB(String chatId, VKApiMessage message, String nickname) {
-//        dbHelper.insertMessages(chatId, String.valueOf(message.id), message.body, message.out, nickname, String.valueOf(message.date));
-//    }
 
     /**
      * Получение имени и фимилии пользователя по его идентификатору
@@ -680,30 +662,30 @@ public class MainActivity extends AppCompatActivity {
         return nickname[0];
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (!VKSdk.onActivityResult(requestCode, resultCode, data, new VKCallback<VKAccessToken>() {
-            @Override
-            public void onResult(VKAccessToken res) {
-                // Пользователь успешно авторизовался
-                /**
-                 * Инициализация таблицы пользователей в локальной БД при успешной авторизации
-                 */
-                initializeUsersTable();
-//                initializeMessagesTable();
-                /**
-                 * Формирование пользовательского интерфейса после успешной авторизации
-                 */
-                initUI();
-
-            }
-            @Override
-            public void onError(VKError error) {
-                // Произошла ошибка авторизации (например, пользователь запретил авторизацию)
-                Toast.makeText(getApplicationContext(), "Fail", Toast.LENGTH_SHORT).show();
-            }
-        })) {
-            super.onActivityResult(requestCode, resultCode, data);
-        }
-    }
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        if (!VKSdk.onActivityResult(requestCode, resultCode, data, new VKCallback<VKAccessToken>() {
+//            @Override
+//            public void onResult(VKAccessToken res) {
+//                // Пользователь успешно авторизовался
+//                /**
+//                 * Инициализация таблицы пользователей в локальной БД при успешной авторизации
+//                 */
+////                initializeUsersTable();
+////                initializeMessagesTable();
+//                /**
+//                 * Формирование пользовательского интерфейса после успешной авторизации
+//                 */
+//                initUI();
+//
+//            }
+//            @Override
+//            public void onError(VKError error) {
+//                // Произошла ошибка авторизации (например, пользователь запретил авторизацию)
+//                Toast.makeText(getApplicationContext(), "Fail", Toast.LENGTH_SHORT).show();
+//            }
+//        })) {
+//            super.onActivityResult(requestCode, resultCode, data);
+//        }
+//    }
 }

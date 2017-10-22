@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.velkonost.lume.R;
-import com.velkonost.lume.vkontakte.structures.MessagesList;
+import com.velkonost.lume.vkontakte.models.MessagesList;
 
 /**
  * Адаптер сообщений диалога
