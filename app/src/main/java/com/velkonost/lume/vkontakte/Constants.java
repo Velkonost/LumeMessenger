@@ -55,6 +55,7 @@ public class Constants {
         public static final String MESSAGES = "messages";
         public static final String CHAT_ID = "chat_id";
         public static final String USER_ID = "user_id";
+        public static final String PHOTO_50 = "photo_50";
     }
 
     public static final class MESSAGES_DATA {

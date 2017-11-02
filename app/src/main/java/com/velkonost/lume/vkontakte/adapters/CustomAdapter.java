@@ -8,10 +8,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.velkonost.lume.R;
-import com.vk.sdk.api.model.VKApiDialog;
-import com.vk.sdk.api.model.VKList;
-
-import java.util.ArrayList;
 
 /**
  * ВРЕМЕННО
@@ -19,11 +15,7 @@ import java.util.ArrayList;
 
 public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder> {
 
-    private ArrayList<String> users, messages;
     private Context ctx;
-    private VKList<VKApiDialog> list;
-
-
 
     public CustomAdapter(Context ctx) {
         this.ctx = ctx;
@@ -40,10 +32,16 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
+        if (position == 0) {
+
+        } else {
+            ViewGroup.LayoutParams params = holder.txt.getLayoutParams();
+            params.height = 0;
+            holder.txt.setLayoutParams(params);
+        }
 
         holder.txt.setText("0");
         holder.txt2.setText("1");
-
 
     }
 

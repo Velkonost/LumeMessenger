@@ -3,6 +3,7 @@ package com.velkonost.lume.vkontakte.activities;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -17,8 +18,8 @@ import com.velkonost.lume.R;
 import com.velkonost.lume.vkontakte.adapters.CustomAdapter;
 import com.velkonost.lume.vkontakte.adapters.DialogsAdapter;
 import com.velkonost.lume.vkontakte.adapters.FriendsAdapter;
+import com.velkonost.lume.vkontakte.adapters.SearchUsersAdapter;
 import com.velkonost.lume.vkontakte.db.DBHelper;
-import com.vk.sdk.VKScope;
 import com.vk.sdk.api.VKApi;
 import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKError;
@@ -53,6 +54,7 @@ import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ORDER;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.CHAT_ID;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.ITEMS;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.MESSAGE;
+import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.PHOTO_50;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.RESPONSE;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.USER_ID;
 import static com.velkonost.lume.vkontakte.Constants.VIEW_PAGER_PAGES.DIALOGS_PAGE;
@@ -64,13 +66,6 @@ import static com.velkonost.lume.vkontakte.Constants.VIEW_PAGER_PAGES.SETTINGS_P
  */
 
 public class MainActivity extends AppCompatActivity {
-
-    /**
-     * Массив с информацией, какие данные следует получить при авторизации
-     * */
-    private String[] scope = new String[]{
-            VKScope.MESSAGES, VKScope.FRIENDS
-    };
 
     private ViewPager viewPager;
 
@@ -91,6 +86,15 @@ public class MainActivity extends AppCompatActivity {
      */
     private long timeDelay = 0;
 
+    private FriendsAdapter mFriendsAdapter;
+    private DialogsAdapter mDialogsAdapter;
+    private SearchUsersAdapter mSearchUsersAdapter;
+
+    private PagerAdapter mPagerAdapterSearch;
+    private PagerAdapter mPagerAdapterDefault;
+
+    private boolean isSetDefaultPageAdapter;
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,6 +102,10 @@ public class MainActivity extends AppCompatActivity {
 
         viewPager = (ViewPager) findViewById(R.id.vp_horizontal_ntb);
         dbHelper = new DBHelper(this);
+
+        initializeFirstPageAdapterDefault();
+
+        initializePageAdapterSearch();
 
         initUI();
     }
@@ -188,7 +196,8 @@ public class MainActivity extends AppCompatActivity {
         VKList<VKApiDialog> list = getMessagesResponse.items;
         completeRequestMessages(list, users, messages);
 
-        return new DialogsAdapter(users, messages, MainActivity.this, idsList, dbHelper);
+        mDialogsAdapter = new DialogsAdapter(users, messages, MainActivity.this, idsList, dbHelper);
+        return mDialogsAdapter;
     }
 
     /**
@@ -196,7 +205,8 @@ public class MainActivity extends AppCompatActivity {
      */
     private FriendsAdapter getFriendsAdapter(VKResponse response) {
         VKList list = (VKList) response.parsedModel;
-        return new FriendsAdapter(MainActivity.this, list);
+        mFriendsAdapter = new FriendsAdapter(MainActivity.this, list);
+        return mFriendsAdapter;
     }
 
     /**
@@ -344,13 +354,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /**
-     * Формирование пользовательского интерфейса
-     */
-    private void initUI() {
-
-        viewPager.setOffscreenPageLimit(3);
-        viewPager.setAdapter(new PagerAdapter() {
+    private void initializeFirstPageAdapterDefault() {
+        mPagerAdapterDefault = new PagerAdapter() {
             /**
              * Кол-во вкладок
              */
@@ -402,19 +407,10 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         @Override
-                        public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
-                            super.attemptFailed(request, attemptNumber, totalAttempts);
-                        }
-
-                        @Override
                         public void onError(VKError error) {
                             super.onError(error);
                         }
 
-                        @Override
-                        public void onProgress(VKRequest.VKProgressType progressType, long bytesLoaded, long bytesTotal) {
-                            super.onProgress(progressType, bytesLoaded, bytesTotal);
-                        }
                     });
 
                 } else if (position == 1) {
@@ -426,7 +422,7 @@ public class MainActivity extends AppCompatActivity {
                      * Получение необходимой информации о друзьях, сортировка в порядке важности
                      */
                     final VKRequest requestFriends = VKApi.friends().get(VKParameters.from(
-                            FIELDS, FIRST_NAME + COMMA + LAST_NAME + COMMA + DOMAIN,
+                            FIELDS, FIRST_NAME + COMMA + LAST_NAME + COMMA + DOMAIN + COMMA + PHOTO_50,
                             ORDER, HINTS));
 
                     requestFriends.executeWithListener(new VKRequest.VKRequestListener() {
@@ -440,20 +436,11 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         @Override
-                        public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
-                            super.attemptFailed(request, attemptNumber, totalAttempts);
-                        }
-
-                        @Override
                         public void onError(VKError error) {
                             super.onError(error);
                             Log.i(DEBUG_TAG, String.valueOf(error));
                         }
 
-                        @Override
-                        public void onProgress(VKRequest.VKProgressType progressType, long bytesLoaded, long bytesTotal) {
-                            super.onProgress(progressType, bytesLoaded, bytesTotal);
-                        }
                     });
                 } else {
                     /**
@@ -466,9 +453,157 @@ public class MainActivity extends AppCompatActivity {
                 container.addView(view);
                 return view;
             }
-        });
+        };
+    }
+
+    private void initializePageAdapterDefault() {
+        mPagerAdapterDefault = new PagerAdapter() {
+            /**
+             * Кол-во вкладок
+             */
+            @Override
+            public int getCount() {
+                return 3;
+            }
+
+            @Override
+            public boolean isViewFromObject(final View view, final Object object) {
+                return view.equals(object);
+            }
+
+            @Override
+            public void destroyItem(final View container, final int position, final Object object) {
+                ((ViewPager) container).removeView((View) object);
+            }
+
+            @Override
+            public Object instantiateItem(final ViewGroup container, final int position) {
+                final View view = LayoutInflater.from(
+                        getBaseContext()).inflate(R.layout.item_vp_list, null, false);
+
+                final RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.rv);
+                setRecyclerViewConfiguration(recyclerView);
+
+                if (position == 0) {
+                    recyclerView.setAdapter(mDialogsAdapter);
+                } else if (position == 1) {
+
+                    recyclerView.setAdapter(mFriendsAdapter);
+
+                } else {
+                    /**
+                     * Вкладка настроек (?)
+                     */
+                    recyclerView.setAdapter(new CustomAdapter(MainActivity.this));
+                }
+
+
+                container.addView(view);
+                return view;
+            }
+        };
+    }
+    private void initializePageAdapterSearch() {
+        mPagerAdapterSearch = new PagerAdapter() {
+            /**
+             * Кол-во вкладок
+             */
+            @Override
+            public int getCount() {
+                return 3;
+            }
+
+            @Override
+            public boolean isViewFromObject(final View view, final Object object) {
+                return view.equals(object);
+            }
+
+            @Override
+            public void destroyItem(final View container, final int position, final Object object) {
+                ((ViewPager) container).removeView((View) object);
+            }
+
+            @Override
+            public Object instantiateItem(final ViewGroup container, final int position) {
+                final View view = LayoutInflater.from(
+                        getBaseContext()).inflate(R.layout.item_vp_list, null, false);
+
+                final RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.rv);
+                setRecyclerViewConfiguration(recyclerView);
+
+                if (position == 0) {
+                    recyclerView.setAdapter(mDialogsAdapter);
+                } else if (position == 1) {
+
+                    mSearchUsersAdapter = new SearchUsersAdapter(MainActivity.this, new VKList());
+                    recyclerView.setAdapter(mSearchUsersAdapter);
+
+                } else {
+                    /**
+                     * Вкладка настроек (?)
+                     */
+
+                    recyclerView.setAdapter(new CustomAdapter(MainActivity.this));
+                }
+
+
+                container.addView(view);
+                return view;
+            }
+        };
+    }
+
+    /**
+     * Формирование пользовательского интерфейса
+     */
+    private void initUI() {
+
+        viewPager.setOffscreenPageLimit(3);
+        viewPager.setAdapter(mPagerAdapterDefault);
+        isSetDefaultPageAdapter = true;
 
         initializeNavigationTabBar();
+
+        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
+
+            @Override
+            public void onPageSelected(int position) {
+                if(position == 0) {
+                    fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_eighth));
+                } else if (position == 1) {
+                    fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_fifth));
+                    fab.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (isSetDefaultPageAdapter) {
+                                viewPager.removeAllViews();
+                                viewPager.setAdapter(null);
+                                viewPager.setOffscreenPageLimit(3);
+                                viewPager.setAdapter(mPagerAdapterSearch);
+                                viewPager.setCurrentItem(1);
+                                isSetDefaultPageAdapter = false;
+                            } else {
+                                initializePageAdapterDefault();
+                                viewPager.removeAllViews();
+                                viewPager.setAdapter(null);
+                                viewPager.setOffscreenPageLimit(3);
+                                viewPager.setAdapter(mPagerAdapterDefault);
+                                isSetDefaultPageAdapter = true;
+                            }
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
 
 //        findViewById(R.id.fab).setOnClickListener(new View.OnClickListener() {
 //            @Override
@@ -491,99 +626,6 @@ public class MainActivity extends AppCompatActivity {
 //        });
     }
 
-//    private void initializeMessagesTable() {
-//        VKRequest requestMessages = VKApi.messages().getDialogs(VKParameters.from("count", 10));
-//        requestMessages.executeWithListener(new VKRequest.VKRequestListener() {
-//
-//            @Override
-//            public void onComplete(VKResponse response) {
-//                super.onComplete(response);
-//                try {
-//                    JSONObject jsonResponse = (JSONObject) response.json.get("response");
-//                    JSONArray messagesJSONArray = jsonResponse.getJSONArray("items");
-//
-//                    for (int i = 0; i < messagesJSONArray.length(); i++) {
-//                        JSONObject jsonMessage = (JSONObject) messagesJSONArray.get(i);
-//                        jsonMessage = jsonMessage.getJSONObject("message");
-//
-//                        String chatId;
-//                        String typeOfDialog;
-//                        try {
-//                            chatId = jsonMessage.getString("chat_id");
-//                            typeOfDialog = "chat_id";
-//                        } catch (JSONException e) {
-//                            chatId = jsonMessage.getString("user_id");
-//                            typeOfDialog = "user_id";
-//                        }
-//
-//                        final String finalChatId = chatId;
-//                        final JSONObject finalJsonMessage = jsonMessage;
-//                        final String finalTypeOfDialog = typeOfDialog;
-//
-//                        Handler handler = new Handler();
-//                        handler.postDelayed(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                VKRequest request = new VKRequest("messages.getHistory", VKParameters.from(finalTypeOfDialog, finalChatId));
-//                                request.executeWithListener(new VKRequest.VKRequestListener() {
-//                                    @Override
-//                                    public void onError(VKError error) {
-//                                        super.onError(error);
-//                                        Log.i(DEBUG_TAG, "Error getHistory:" + finalJsonMessage.toString());
-//                                        Log.i(DEBUG_TAG, String.valueOf(error));
-//                                    }
-//
-//                                    @Override
-//                                    public void onComplete(VKResponse response) {
-//                                        super.onComplete(response);
-//
-//                                        try {
-//                                            JSONArray array = response.json.getJSONObject("response").getJSONArray("items");
-//                                            VKApiMessage[] msg = new VKApiMessage[array.length()];
-//
-//                                            for (int i = 0; i < array.length(); i++) {
-//                                                VKApiMessage mes = new VKApiMessage(array.getJSONObject(i));
-//                                                msg[i] = mes;
-//                                            }
-//
-//                                            for (final VKApiMessage message : msg) {
-//                                                Handler handler = new Handler();
-//                                                handler.postDelayed(new Runnable() {
-//                                                    @Override
-//                                                    public void run() {
-//                                                        final String id = String.valueOf(message.user_id);
-//                                                        final String[] nickname = {dbHelper.getFromUsersNicknameById(id)};
-//                                                        if (message.out) {
-//                                                            nickname[0] = "Я";
-//                                                        }
-//
-//                                                        if (nickname[0] == null) {
-//                                                            requestUserNickname(finalChatId, message);
-//                                                        } else {
-//                                                            addNewMessageInDB(finalChatId, message, nickname[0]);
-//                                                        }
-//                                                    }}, timeDelay += 600);
-//                                            }
-//                                        } catch (JSONException e) {
-//                                            e.printStackTrace();
-//                                        }
-//                                    }
-//                                });
-//                            }
-//                        }, timeDelay += 800);
-//                    }
-//                } catch (JSONException e) {
-//                    reportJSONException();
-//                    e.printStackTrace();
-//                }
-//            }
-//
-//            @Override
-//            public void onError(VKError error) {
-//                super.onError(error);
-//            }
-//        });
-//    }
 
     /**
      * Получение имени и фамилии пользователя по его идентификатору через API VK
