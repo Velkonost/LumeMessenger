@@ -4,16 +4,17 @@ import android.content.Context;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.velkonost.lume.R;
+import com.velkonost.lume.vkontakte.activities.MessagesActivity;
 import com.velkonost.lume.vkontakte.db.DBHelper;
 import com.velkonost.lume.vkontakte.models.MessagesList;
 import com.vk.sdk.api.VKApi;
@@ -32,10 +33,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
 
-import static com.velkonost.lume.Constants.DEBUG_TAG;
 import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.AMOUNT_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.COUNT;
+import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.START_MESSAGE_ID;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.CHAT_ID;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.ITEMS;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.RESPONSE;
@@ -49,17 +50,34 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     private Context ctx;
     private MessagesList messagesList;
+
+    /**
+     * Идентификатор текущего диалога
+     */
     private String dialogId;
     private DBHelper dbHelper;
 
-    public MessagesAdapter(MessagesList messagesList, Context ctx, String dialogId) {
+    private MessagesActivity mMessagesActivity;
+
+
+    private int countMessagesOutRow;
+    private int countMessagesInRow;
+
+    public MessagesAdapter(MessagesActivity messagesActivity, MessagesList messagesList, Context ctx, String dialogId) {
         this.messagesList = messagesList;
+        mMessagesActivity = messagesActivity;
 
         this.ctx = ctx;
         this.dialogId = dialogId;
         this.dbHelper = new DBHelper(ctx);
+
+        countMessagesInRow = 0;
+        countMessagesOutRow = 0;
     }
 
+    /**
+     * Получение идентификатора последнего сообщения
+     */
     private String getLastMessageId() {
         return String.valueOf(Integer.parseInt(messagesList.getMessageIdsByPosition(messagesList.getMessagesAmount() - 1)) - 1);
     }
@@ -112,7 +130,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                      */
                     final String[] senderNicknameTemp = new String[1];
 
-                    VKRequest request = new VKRequest(GET_MESSAGES, VKParameters.from(typeOfDialog, dialogId, COUNT, AMOUNT_MESSAGES, "start_message_id", getLastMessageId()));
+                    VKRequest request = new VKRequest(
+                            GET_MESSAGES,
+                            VKParameters.from(typeOfDialog, dialogId, COUNT, AMOUNT_MESSAGES, START_MESSAGE_ID, getLastMessageId())
+                    );
                     request.executeWithListener(new VKRequest.VKRequestListener() {
                         @Override
                         public void onComplete(VKResponse response) {
@@ -121,7 +142,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                             JSONArray array = null;
                             try {
                                 array = response.json.getJSONObject(RESPONSE).getJSONArray(ITEMS);
-                                Log.i(DEBUG_TAG, array.toString());
 
                             } catch (JSONException e) {
                                 e.printStackTrace();
@@ -141,29 +161,29 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
                             for (final VKApiMessage message : msg) {
 
-                                /**
-                                 * Список тел пересланных сообщений
+                                /*
+                                  Список тел пересланных сообщений
                                  */
                                 ArrayList<String> fwdMessagesBodies = new ArrayList<>();
 
-                                /**
-                                 * Список отправителей пересланных сообщений
+                                /*
+                                  Список отправителей пересланных сообщений
                                  */
                                 ArrayList<String> fwdMessagesSenders = new ArrayList<>();
 
-                                /**
-                                 * Список дат пересланных сообщений
+                                /*
+                                  Список дат пересланных сообщений
                                  */
                                 ArrayList<String> fwdMessagesDates = new ArrayList<>();
 
-                                /**
-                                 * Получение данных о пересланных сообщениях
+                                /*
+                                  Получение данных о пересланных сообщениях
                                  */
                                 getFwdMessage(message, fwdMessagesBodies, fwdMessagesSenders, fwdMessagesDates);
 
                                 if (typeOfDialog.equals(USER_ID)) {
-                                    /**
-                                     * Если диалог - личная переписка
+                                    /*
+                                      Если диалог - личная переписка
                                      */
                                     if (!isSenderDetected[0]) {
                                         senderNicknameTemp[0] = getNicknameById(String.valueOf(message.user_id));
@@ -171,8 +191,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                     }
 
                                     if (message.out) {
-                                        /**
-                                         * Если авторизованный пользователь - отправитель сообщения
+                                        /*
+                                          Если авторизованный пользователь - отправитель сообщения
                                          */
                                         senderNickname[0] = "Я";
                                     } else {
@@ -181,8 +201,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
                                 } else {
                                     if (message.out) {
-                                        /**
-                                         * Если авторизованный пользователь - отправитель сообщения
+                                        /*
+                                          Если авторизованный пользователь - отправитель сообщения
                                          */
                                         senderNickname[0] = "Я";
                                     } else {
@@ -205,35 +225,38 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 }
             });
         } else {
+            holder.messageWrap.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    mMessagesActivity.addFwdMessageToSend(messagesList.getMessageIdsByPosition(position));
+                    return true;
+                }
+            });
 
-            LinearLayout.LayoutParams params
-                    = new LinearLayout.LayoutParams(RecyclerView.LayoutParams.WRAP_CONTENT,
-                    RecyclerView.LayoutParams.WRAP_CONTENT);
+            holder.messageWrap.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mMessagesActivity.removeFwdMessageToSend(messagesList.getMessageIdsByPosition(position));
+
+                }
+            });
+
+            RelativeLayout.LayoutParams params
+                    = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,
+                    RelativeLayout.LayoutParams.WRAP_CONTENT);
 
             if (messagesList.getMessageIsOutByPosition(position).equals("true")) {
-                holder.userName.setBackground(ContextCompat.getDrawable(ctx, R.drawable.dialog_message_from));
-                holder.messageBody.setBackground(ContextCompat.getDrawable(ctx, R.drawable.dialog_message_from));
-                holder.messageDate.setBackground(ContextCompat.getDrawable(ctx, R.drawable.dialog_message_from));
-                holder.rvFwdMessages.setBackground(ContextCompat.getDrawable(ctx, R.drawable.dialog_message_from));
 
-                params.gravity = Gravity.RIGHT;
+                holder.messageBackground.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.message_neutral));
+                params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
 
             } else {
-                holder.userName.setBackground(ContextCompat.getDrawable(ctx, R.drawable.dialog_message_to));
-                holder.messageBody.setBackground(ContextCompat.getDrawable(ctx, R.drawable.dialog_message_to));
-                holder.messageDate.setBackground(ContextCompat.getDrawable(ctx, R.drawable.dialog_message_to));
-                holder.rvFwdMessages.setBackground(ContextCompat.getDrawable(ctx, R.drawable.dialog_message_to));
-
-                params.gravity = Gravity.LEFT;
-
+                holder.messageBackground.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.message_neutral));
+                params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
             }
 
-            holder.userName.setLayoutParams(params);
-            holder.messageBody.setLayoutParams(params);
-            holder.messageDate.setLayoutParams(params);
-            holder.rvFwdMessages.setLayoutParams(params);
+            holder.messageWrap.setLayoutParams(params);
 
-            holder.userName.setText(messagesList.getMessageSendersByPosition(position));
             holder.messageBody.setText(messagesList.getMessageBodyByPosition(position));
             holder.messageDate.setText(messagesList.getMessageDateByPosition(position));
 
@@ -363,6 +386,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     class ViewHolder extends RecyclerView.ViewHolder {
 
+        LinearLayout messageWrap;
+
         /**
          * Полное имя автора сообщения
          */
@@ -385,17 +410,22 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         Button btnShowMore;
 
+        ImageView messageBackground;
+
         ViewHolder(final View itemView, boolean last) {
             super(itemView);
 
             if (last) {
                 btnShowMore = (Button) itemView.findViewById(R.id.show_more);
             } else {
-                userName = (TextView) itemView.findViewById(R.id.txt_vp_item_list);
-                messageBody = (TextView) itemView.findViewById(R.id.txt_vp_item_list2);
-                messageDate = (TextView) itemView.findViewById(R.id.txt_vp_item_list3);
+                messageWrap = (LinearLayout) itemView.findViewById(R.id.message_wrap);
 
-                rvFwdMessages = (RecyclerView) itemView.findViewById(R.id.rv);
+//                userName = (TextView) itemView.findViewById(R.id.user_name);
+                messageBody = (TextView) itemView.findViewById(R.id.message_body);
+                messageDate = (TextView) itemView.findViewById(R.id.message_date);
+                messageBackground = (ImageView) itemView.findViewById(R.id.message_background);
+
+                rvFwdMessages = (RecyclerView) itemView.findViewById(R.id.fwd_messages_rv);
             }
         }
     }

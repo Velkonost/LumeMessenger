@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/vk_share_blue_color"
     tools:context="com.velkonost.lume.MainActivity">
 
     <Button
@@ -40,6 +41,16 @@
         android:id="@+id/test"
         tools:layout_editor_absoluteY="96dp"
         tools:layout_editor_absoluteX="148dp"/>
+
+    <com.wang.avi.AVLoadingIndicatorView
+        android:id="@+id/load_view"
+        android:animateLayoutChanges="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:indicatorName="LineScaleIndicator"
+        android:layout_gravity="center"
+        android:alpha="0.0"
+        android:layout_centerInParent="true"/>
 
     <!--<ListView-->
         <!--android:layout_width="match_parent"-->

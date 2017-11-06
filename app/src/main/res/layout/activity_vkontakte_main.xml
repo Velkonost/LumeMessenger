@@ -13,6 +13,8 @@
         android:id="@+id/vp_horizontal_ntb"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:animateLayoutChanges="true"
+        android:alpha="0.0"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 
     <devlight.io.library.ntb.NavigationTabBar
@@ -27,6 +29,8 @@
         app:ntb_badge_title_color="#ffffffff"
         app:ntb_badge_use_typeface="true"
         app:ntb_badged="true"
+        android:alpha="0.0"
+        android:animateLayoutChanges="true"
         app:ntb_typeface="fonts/agency.ttf"/>
 
     <android.support.design.widget.FloatingActionButton
@@ -37,8 +41,35 @@
         android:layout_marginBottom="76dp"
         android:layout_marginRight="16dp"
         android:layout_marginEnd="16dp"
-        android:tint="#9f90af"
-        android:src="@drawable/ic_first"
-        app:backgroundTint="#605271"/>
+        android:background="@color/vk_share_blue_color"
+        android:animateLayoutChanges="true"
+        android:alpha="0.0"
+        android:src="@drawable/ic_plus"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:animateLayoutChanges="true"
+        android:id="@+id/loading_view">
+        <ImageView
+            android:id="@+id/loading_icon"
+            android:animateLayoutChanges="true"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:src="@mipmap/ic_launcher"
+            android:layout_centerInParent="true"/>
+        <TextView
+            android:id="@+id/loading_text"
+            android:animateLayoutChanges="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/loading_icon"
+            android:gravity="center"
+            android:textColor="@color/vk_white"
+            android:text="123"
+            />
+
+    </RelativeLayout>
+
 
 </android.support.design.widget.CoordinatorLayout>

@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import com.velkonost.lume.R;
 import com.velkonost.lume.vkontakte.adapters.MessagesAdapter;
@@ -41,6 +42,7 @@ import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_LONG_POLL_M
 import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_LONG_POLL_SERVER;
 import static com.velkonost.lume.vkontakte.Constants.API_METHODS.SEND_MESSAGE;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIELDS;
+import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FORWARD_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ID;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.IS_NEED_PTS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.PTS;
@@ -137,6 +139,9 @@ public class MessagesActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
 
+    private TextView fwdMessagesToSend;
+    private ArrayList<String> fwdMessagesToSendList;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -150,16 +155,15 @@ public class MessagesActivity extends AppCompatActivity {
         ts = dbHelper.getValueFromMetaData(TS_MESSAGES);
         pts = dbHelper.getValueFromMetaData(PTS_MESSAGES);
 
-        Log.i(DEBUG_TAG, ts);
-        Log.i(DEBUG_TAG, pts);
-
+        fwdMessagesToSendList = new ArrayList<>();
+        fwdMessagesToSend = (TextView) findViewById(R.id.fwd_messages);
         editNewMessage = (EditText) findViewById(R.id.editNewMessage);
         btnSendNewMessage = (Button) findViewById(R.id.sendNewMessage);
 
         recyclerView = (RecyclerView) findViewById(R.id.rv);
         setRecyclerViewConfiguration(recyclerView);
 
-        recyclerView.setAdapter(new MessagesAdapter(messagesList, MessagesActivity.this, id));
+        recyclerView.setAdapter(new MessagesAdapter(MessagesActivity.this, messagesList, MessagesActivity.this, id));
 
         /**
          * Отправка нового сообщения
@@ -172,7 +176,20 @@ public class MessagesActivity extends AppCompatActivity {
                 String newMessageBody = editNewMessage.getText().toString();
                 editNewMessage.setText("");
 
-                VKRequest request = new VKRequest(SEND_MESSAGE, VKParameters.from(typeOfDialog, id, VKApiConst.MESSAGE, newMessageBody));
+                String fwdMessagesToSendStr = "";
+                for (int i = 0; i < fwdMessagesToSendList.size(); i++) {
+                    fwdMessagesToSendStr += fwdMessagesToSendList.get(i) + ",";
+                }
+                fwdMessagesToSendList = new ArrayList<String>();
+
+                VKRequest request = new VKRequest(
+                        SEND_MESSAGE,
+                        VKParameters.from(
+                                typeOfDialog, id,
+                                VKApiConst.MESSAGE, newMessageBody,
+                                FORWARD_MESSAGES, fwdMessagesToSendStr
+                        )
+                );
 
                 request.executeWithListener(new VKRequest.VKRequestListener() {
                     @Override
@@ -193,6 +210,14 @@ public class MessagesActivity extends AppCompatActivity {
 
             }
         }, REFRESH_MESSAGES_PERIOD);
+    }
+
+    @Override
+    protected void onStop() {
+        if (timer != null) {
+            timer.cancel();
+        }
+        super.onStop();
     }
 
     /**
@@ -527,6 +552,20 @@ public class MessagesActivity extends AppCompatActivity {
             });
         }
         return nickname[0];
+    }
+
+    public void addFwdMessageToSend(String messageId) {
+        if (!fwdMessagesToSendList.contains(messageId)) {
+            fwdMessagesToSendList.add(messageId);
+            fwdMessagesToSend.setText(fwdMessagesToSendList.toString());
+        }
+    }
+
+    public void removeFwdMessageToSend(String messageId) {
+        if (fwdMessagesToSendList.contains(messageId)) {
+            fwdMessagesToSendList.remove(messageId);
+            fwdMessagesToSend.setText(fwdMessagesToSendList.toString());
+        }
     }
 
 }

@@ -1,20 +1,33 @@
 package com.velkonost.lume.vkontakte.activities;
 
+import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.RelativeLayout;
 
+import com.baoyz.swipemenulistview.SwipeMenu;
+import com.baoyz.swipemenulistview.SwipeMenuCreator;
+import com.baoyz.swipemenulistview.SwipeMenuItem;
+import com.baoyz.swipemenulistview.SwipeMenuListView;
 import com.velkonost.lume.R;
+import com.velkonost.lume.vkontakte.adapters.CreateChatAdapter;
 import com.velkonost.lume.vkontakte.adapters.CustomAdapter;
 import com.velkonost.lume.vkontakte.adapters.DialogsAdapter;
 import com.velkonost.lume.vkontakte.adapters.FriendsAdapter;
@@ -35,14 +48,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.TimeZone;
 
 import devlight.io.library.ntb.NavigationTabBar;
 
 import static com.velkonost.lume.Constants.COMMA;
 import static com.velkonost.lume.Constants.DEBUG_TAG;
+import static com.velkonost.lume.R.id.fab;
+import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_PROFILE_INFO;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.AMOUNT_DIALOGS;
+import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.AMOUNT_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.COUNT;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.DOMAIN;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIELDS;
@@ -51,11 +70,22 @@ import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.HINTS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ID;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.LAST_NAME;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ORDER;
+import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_BODIES_LISTS;
+import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_DATES_LISTS;
+import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_SENDERS_LISTS;
+import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_BODIES;
+import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_DATES;
+import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_IDS;
+import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_IS_OUT;
+import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_SENDERS;
+import static com.velkonost.lume.vkontakte.Constants.REFRESH_MESSAGES_PERIOD;
+import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.BODY;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.CHAT_ID;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.ITEMS;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.MESSAGE;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.PHOTO_50;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.RESPONSE;
+import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.TITLE;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.USER_ID;
 import static com.velkonost.lume.vkontakte.Constants.VIEW_PAGER_PAGES.DIALOGS_PAGE;
 import static com.velkonost.lume.vkontakte.Constants.VIEW_PAGER_PAGES.FRIENDS_PAGE;
@@ -86,14 +116,55 @@ public class MainActivity extends AppCompatActivity {
      */
     private long timeDelay = 0;
 
+    /**
+     * Адаптер вкладки друзей пользователя
+     */
     private FriendsAdapter mFriendsAdapter;
+
+    /**
+     * Адаптер списка диалогов пользователя
+     */
     private DialogsAdapter mDialogsAdapter;
+
+    /**
+     * Адаптер вкладки для создания новой беседы
+     */
+    private CreateChatAdapter mCreateChatAdapter;
+
+    /**
+     * Адаптер вкладки для поиска пользователей
+     */
     private SearchUsersAdapter mSearchUsersAdapter;
+
 
     private PagerAdapter mPagerAdapterSearch;
     private PagerAdapter mPagerAdapterDefault;
+    private PagerAdapter mPagerAdapterCreateChat;
 
-    private boolean isSetDefaultPageAdapter;
+    /**
+     * Состояние адаптера для вкладки поиска пользователей
+     */
+    private boolean isSetSearchPageAdapter;
+
+    /**
+     * Состояние адаптера для вкладки создания беседы
+     */
+    private boolean isSetCreateChatPageAdapter;
+
+    /**
+     * Элемент, отображающийся поверх во время загрузки данных
+     */
+    private RelativeLayout loadingView;
+
+    /**
+     * Основная кнопка на экране
+     */
+    private FloatingActionButton mainFab;
+
+    /**
+     * Таймер для обновления списка диалогов
+     */
+    private TimerRefreshDialogsList timer;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -101,13 +172,205 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_vkontakte_main);
 
         viewPager = (ViewPager) findViewById(R.id.vp_horizontal_ntb);
+        mainFab = (FloatingActionButton) findViewById(fab);
         dbHelper = new DBHelper(this);
 
-        initializeFirstPageAdapterDefault();
+        loadingView = (RelativeLayout) findViewById(R.id.loading_view);
 
-        initializePageAdapterSearch();
+        /* Установка слушателя на основную кнопку */
+        initializeFabListener();
 
-        initUI();
+        new InitializeData().execute();
+        startTimerRefreshDialogsList();
+    }
+
+    /**
+     * Запус таймера для обновления списка диалогов
+     */
+    private void startTimerRefreshDialogsList() {
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                timer = new TimerRefreshDialogsList(1000000000, REFRESH_MESSAGES_PERIOD);
+                timer.start();
+            }
+        }, REFRESH_MESSAGES_PERIOD);
+    }
+
+    /**
+     * Таймер для обновления состояния списка диалогов через определенный период
+     */
+    private class TimerRefreshDialogsList extends CountDownTimer {
+
+        TimerRefreshDialogsList(long millisInFuture, long countDownInterval) {
+            super(millisInFuture, countDownInterval);
+        }
+
+        @Override
+        public void onTick(long l) {
+            updateDialogs();
+        }
+
+        @Override
+        public void onFinish() {
+            finish();
+        }
+    }
+
+    /**
+     * Получение по API обновленного списка диалогов
+     */
+    private void updateDialogs() {
+        VKRequest requestMessages = VKApi.messages().getDialogs(VKParameters.from(COUNT, AMOUNT_DIALOGS));
+        requestMessages.executeWithListener(new VKRequest.VKRequestListener() {
+            @Override
+            public void onComplete(VKResponse response) {
+                super.onComplete(response);
+                refreshDialogsList(response);
+            }
+
+            @Override
+            public void onError(VKError error) {
+                super.onError(error);
+            }
+        });
+    }
+
+    /**
+     * Обновление списка диалогов
+     * @param response - ответ, полученный от запроса по API
+     */
+    private void refreshDialogsList(VKResponse response) {
+        final ArrayList<String> users = mDialogsAdapter.getUsers();
+        ArrayList<String> messages = mDialogsAdapter.getMessages();
+        ArrayList<String> idsList = mDialogsAdapter.getIdsList();
+
+        JSONObject jsonResponse = null;
+        try {
+            jsonResponse = (JSONObject) response.json.get(RESPONSE);
+            JSONArray messagesJSONArray = jsonResponse.getJSONArray(ITEMS);
+
+            for (int i = 0; i < messagesJSONArray.length(); i++) {
+                JSONObject jsonMessage = (JSONObject) messagesJSONArray.get(i);
+                jsonMessage = jsonMessage.getJSONObject(MESSAGE);
+
+                String chatId;
+                try {
+                    chatId = jsonMessage.getString(CHAT_ID);
+                } catch (JSONException e) {
+                    chatId = jsonMessage.getString(USER_ID);
+                }
+
+                // иначе не работает! причина неизвестна
+                if(String.valueOf(idsList.contains(chatId)).equals("false")) {
+                    idsList.add(0, chatId);
+
+                    final String[] dialogTitle = {jsonMessage.getString(TITLE)};
+
+                    if (dialogTitle[0].equals("")) {
+                        VKRequest request = VKApi.users().get(
+                                VKParameters.from(
+                                        VKApiConst.USER_ID,
+                                        jsonMessage.getString(USER_ID)
+                                )
+                        );
+
+                        request.executeSyncWithListener(new VKRequest.VKRequestListener() {
+                            @Override
+                            public void onComplete(VKResponse response) {
+                                super.onComplete(response);
+
+                                VKList list = (VKList) response.parsedModel;
+                                dialogTitle[0] = String.valueOf(list.get(0));
+                                users.add(0, String.valueOf(dialogTitle[0]));
+                            }
+                        });
+                    } else {
+                        users.add(0, dialogTitle[0]);
+                    }
+                    messages.add(0, jsonMessage.getString(BODY) + " ");
+
+                } else {
+                    int dialogIndex = idsList.indexOf(chatId);
+                    if (!messages.get(dialogIndex).equals(jsonMessage.getString(BODY))) {
+                        String dialogTitle = users.get(dialogIndex);
+
+                        idsList.remove(dialogIndex);
+                        messages.remove(dialogIndex);
+                        users.remove(dialogIndex);
+
+                        idsList.add(0, chatId);
+                        messages.add(0, jsonMessage.getString(BODY));
+                        users.add(0, dialogTitle);
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        updateDialogsAdapter(users, idsList, messages);
+    }
+
+    /**
+     * Обновление адаптера списка диалогов
+     * @param users - обновленный список названий диалогов
+     * @param idsList - обновленный список идентфикаторов диалогов
+     * @param messages - обновленный список последних сообщений диалогов
+     */
+    private void updateDialogsAdapter(
+            ArrayList<String> users,
+            ArrayList<String> idsList,
+            ArrayList<String> messages
+    ) {
+        mDialogsAdapter.setUsers(users);
+        mDialogsAdapter.setIdsList(idsList);
+        mDialogsAdapter.setMessages(messages);
+        mDialogsAdapter.notifyDataSetChanged();
+    }
+
+    /**
+     * Инициализация слушателя для основной кнопки
+     */
+    private void initializeFabListener() {
+        mainFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!isSetCreateChatPageAdapter) {
+                    setCreateChatMode();
+                } else {
+                    setDefaultModeFromCreateChat();
+                }
+            }
+        });
+    }
+
+    /**
+     * Выполнение сложных операций, инициализация пользовательского интерфейса
+     */
+    private class InitializeData extends AsyncTask<String, String, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            initializeFirstPageAdapterDefault();
+            initializePageAdapterCreateChat();
+            initializePageAdapterSearch();
+
+            return "";
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+
+            initUI();
+
+            loadingView.animate().alpha(0.0f).setDuration(1500);
+            viewPager.animate().alpha(1.0f).setDuration(1500);
+            mainFab.animate().alpha(1.0f).setDuration(1500);
+
+            initializeNavigationTabBar();
+        }
     }
 
     /**
@@ -140,7 +403,6 @@ public class MainActivity extends AppCompatActivity {
     private void completeRequestMessages(VKList<VKApiDialog> list, final ArrayList<String> users,
                                          ArrayList<String> messages) {
 
-
         for (final VKApiDialog msg : list) {
             final String[] dialogTitle = {msg.message.title};
 
@@ -155,14 +417,12 @@ public class MainActivity extends AppCompatActivity {
                         VKList list = (VKList) response.parsedModel;
                         dialogTitle[0] = String.valueOf(list.get(0));
                         users.add(String.valueOf(dialogTitle[0]));
-
                     }
                 });
             } else {
                 users.add(dialogTitle[0]);
             }
             messages.add(msg.message.body);
-
         }
     }
 
@@ -300,6 +560,8 @@ public class MainActivity extends AppCompatActivity {
     private void initializeNavigationTabBar() {
         NavigationTabBar navigationTabBar = (NavigationTabBar) findViewById(R.id.ntb_horizontal);
         navigationTabBar.setModels(initializeModels());
+        navigationTabBar.animate().alpha(1.0f).setDuration(1500);
+
         setNavigationTabBarConfiguration(navigationTabBar);
         setNavigationTabBarListeners(navigationTabBar);
     }
@@ -353,7 +615,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
+    /**
+     * Первая инициализация стандартного адаптера вкладок (с запросами к API)
+     */
     private void initializeFirstPageAdapterDefault() {
         mPagerAdapterDefault = new PagerAdapter() {
             /**
@@ -376,10 +640,12 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public Object instantiateItem(final ViewGroup container, final int position) {
-                final View view = LayoutInflater.from(
+                View view = LayoutInflater.from(
                         getBaseContext()).inflate(R.layout.item_vp_list, null, false);
 
                 final RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.rv);
+                final SwipeMenuListView mListView = (SwipeMenuListView) view.findViewById(R.id.listView);
+
                 setRecyclerViewConfiguration(recyclerView);
 
                 if (position == 0) {
@@ -399,6 +665,9 @@ public class MainActivity extends AppCompatActivity {
                                 /**
                                  * Установка адаптера диалогов
                                  */
+                                mListView.setVisibility(View.INVISIBLE);
+                                recyclerView.setVisibility(View.VISIBLE);
+
                                 recyclerView.setAdapter(getDialogsAdapter(response));
                             } catch (JSONException e) {
                                 reportJSONException();
@@ -432,13 +701,37 @@ public class MainActivity extends AppCompatActivity {
                             /**
                              * Установка адаптера друзей
                              */
-                            recyclerView.setAdapter(getFriendsAdapter(response));
+                            mListView.setVisibility(View.VISIBLE);
+                            recyclerView.setVisibility(View.INVISIBLE);
+
+                            mListView.setAdapter(getFriendsAdapter(response));
+                            mListView.setMenuCreator(getSwipeMenuCreatorFriends());
+
+                            mListView.setOnMenuItemClickListener(new SwipeMenuListView.OnMenuItemClickListener() {
+                                @Override
+                                public boolean onMenuItemClick(int position, SwipeMenu menu, int index) {
+                                    if (index == 0) {
+                                        openDialogByPosition(position);
+                                    }
+                                    else if (index == 1) {
+                                        mFriendsAdapter.removeFriend(position);
+                                    }
+                                    return true;
+                                }
+                            });
+
+                            mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                    mListView.smoothOpenMenu(position);
+                                }
+                            });
+
                         }
 
                         @Override
                         public void onError(VKError error) {
                             super.onError(error);
-                            Log.i(DEBUG_TAG, String.valueOf(error));
                         }
 
                     });
@@ -456,6 +749,250 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
+    /**
+     * Открытие диалога с выбранным пользователем по его позиции в списке друзей
+     * @param position - позиция друга в списке
+     */
+    private void openDialogByPosition(int position) {
+        /**
+         * Список идентификаторов сообщений
+         */
+        final ArrayList<String> messagesIds = new ArrayList<>();
+
+        /**
+         * Список тел сообщений
+         */
+        final ArrayList<String> messagesBodies = new ArrayList<>();
+
+        /**
+         * Булевский список направлений сообщений (отправлено от авторизованного сообщения)
+         */
+        final ArrayList<Boolean> messagesIsOut = new ArrayList<>();
+
+        /**
+         * Список отправителей сообщений
+         */
+        final ArrayList<String> messagesSenders = new ArrayList<>();
+
+        /**
+         * Список дат сообщений
+         */
+        final ArrayList<String> messagesDates = new ArrayList<>();
+
+        /**
+         * Список списков тел пересланных сообщений
+         */
+        final ArrayList< ArrayList<String> > fwdMessagesBodiesLists = new ArrayList<>();
+
+        /**
+         * Список списков отправителей пересланных сообщений
+         */
+        final ArrayList< ArrayList<String> > fwdMessagesSendersLists = new ArrayList<>();
+
+        /**
+         * Список списков дат пересланных сообщений
+         */
+        final ArrayList< ArrayList<String> > fwdMessagesDatesLists = new ArrayList<>();
+
+        /**
+         * Идентификатор диалога
+         */
+        final String id = mFriendsAdapter.getFriendId(position);
+
+        /**
+         * Определение типа диалога
+         */
+        final String typeOfDialog = Integer.parseInt(id) < 100000000 ? CHAT_ID : USER_ID;
+
+        /**
+         * Определен ли отправитель? (для личных диалого)
+         */
+        final boolean[] isSenderDetected = {false};
+
+        /**
+         * Полное имя отправителя сообщения
+         */
+        final String[] senderNickname = new String[1];
+
+        /**
+         * Переменная для временного хранения имени отправителя
+         */
+        final String[] senderNicknameTemp = new String[1];
+
+        /**
+         * Получение "count" последних сообщений диалога
+         */
+        VKRequest request = new VKRequest(
+                GET_MESSAGES,
+                VKParameters.from(typeOfDialog, id, COUNT, AMOUNT_MESSAGES)
+        );
+        request.executeWithListener(new VKRequest.VKRequestListener() {
+            @Override
+            public void onComplete(VKResponse response) {
+                super.onComplete(response);
+
+                try {
+                    JSONArray array = response.json.getJSONObject(RESPONSE).getJSONArray(ITEMS);
+                    VKApiMessage[] msg = new VKApiMessage[array.length()];
+
+                    for (int i = 0; i < array.length(); i++) {
+                        VKApiMessage mes = new VKApiMessage(array.getJSONObject(i));
+                        msg[i] = mes;
+                    }
+
+                    for (final VKApiMessage message : msg) {
+
+                        /**
+                         * Список тел пересланных сообщений
+                         */
+                        ArrayList<String> fwdMessagesBodies = new ArrayList<>();
+
+                        /**
+                         * Список отправителей пересланных сообщений
+                         */
+                        ArrayList<String> fwdMessagesSenders = new ArrayList<>();
+
+                        /**
+                         * Список дат пересланных сообщений
+                         */
+                        ArrayList<String> fwdMessagesDates = new ArrayList<>();
+
+                        /**
+                         * Получение данных о пересланных сообщениях
+                         */
+                        getFwdMessage(message, fwdMessagesBodies, fwdMessagesSenders, fwdMessagesDates);
+
+                        if (typeOfDialog.equals(USER_ID)) {
+                            /**
+                             * Если диалог - личная переписка
+                             */
+                            if (!isSenderDetected[0]) {
+                                senderNicknameTemp[0] = getNicknameById(String.valueOf(message.user_id));
+                                isSenderDetected[0] = true;
+                            }
+
+                            if (message.out) {
+                                /**
+                                 * Если авторизованный пользователь - отправитель сообщения
+                                 */
+                                senderNickname[0] = "Я";
+                            } else {
+                                senderNickname[0] = senderNicknameTemp[0];
+                            }
+
+                        } else {
+                            if (message.out) {
+                                /**
+                                 * Если авторизованный пользователь - отправитель сообщения
+                                 */
+                                senderNickname[0] = "Я";
+                            } else {
+                                senderNickname[0] = getNicknameById(String.valueOf(message.user_id));
+                            }
+                        }
+
+                        fwdMessagesBodiesLists.add(fwdMessagesBodies);
+                        fwdMessagesDatesLists.add(fwdMessagesDates);
+                        fwdMessagesSendersLists.add(fwdMessagesSenders);
+
+                        messagesIds.add(String.valueOf(message.id));
+                        messagesBodies.add(message.body);
+                        messagesIsOut.add(message.out);
+                        messagesDates.add(getMessageDate(message.date));
+                        messagesSenders.add(senderNickname[0]);
+
+                    }
+
+                    /**
+                     * Открытие новой активности, передача полученный данных о сообщениях
+                     */
+                    startActivity(new Intent(MainActivity.this, MessagesActivity.class)
+                            .putExtra(ID, id)
+                            .putExtra(MESSAGES_IDS, messagesIds)
+                            .putExtra(MESSAGES_BODIES, messagesBodies)
+                            .putExtra(MESSAGES_IS_OUT, messagesIsOut)
+                            .putExtra(MESSAGES_DATES, messagesDates)
+                            .putExtra(MESSAGES_SENDERS, messagesSenders)
+                            .putExtra(FWD_MESSAGES_BODIES_LISTS, fwdMessagesBodiesLists)
+                            .putExtra(FWD_MESSAGES_DATES_LISTS, fwdMessagesDatesLists)
+                            .putExtra(FWD_MESSAGES_SENDERS_LISTS, fwdMessagesSendersLists)
+                    );
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    /**
+     * Конвертация из unix в нормальную дату
+     * @param unixSeconds - время в unix-системе
+     * @return - отформатированная дата
+     */
+    private String getMessageDate(long unixSeconds) {
+        Date date = new Date(unixSeconds * 1000L); // *1000 is to convert seconds to milliseconds
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z"); // the format of your date
+        sdf.setTimeZone(TimeZone.getDefault()); // give a timezone reference for formating (see comment at the bottom
+        return sdf.format(date).substring(0, 19);
+    }
+
+    /**
+     * Получения данных о пересланных сообщениях
+     * @param message - сообщения, о пересланных сообщениях которого необходимо получить информацию
+     * @param fwdMessagesBodies - список тел пересланных сообщений
+     * @param fwdMessagesSenders - список отправителей пересланных сообщений
+     * @param fwdMessagesDates - список дат пересланных сообщений
+     */
+    private void getFwdMessage(
+            VKApiMessage message,
+            ArrayList<String> fwdMessagesBodies,
+            ArrayList<String> fwdMessagesSenders,
+            ArrayList<String> fwdMessagesDates
+    ) {
+        int messageFwdAmount = message.fwd_messages.size();
+        for (int fwdMessageIndex = 0; fwdMessageIndex < messageFwdAmount; fwdMessageIndex++) {
+
+            final VKApiMessage fwdMessage = message.fwd_messages.get(fwdMessageIndex);
+
+            final String[] fwdMessageUser = {dbHelper.getFromUsersNicknameById(String.valueOf(fwdMessage.user_id))};
+            if (fwdMessageUser[0] == null) {
+                VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, fwdMessage.user_id));
+                request.executeSyncWithListener(new VKRequest.VKRequestListener() {
+                    @Override
+                    public void onComplete(VKResponse response) {
+                        super.onComplete(response);
+
+                        VKList list = (VKList) response.parsedModel;
+                        fwdMessageUser[0] = String.valueOf(list.get(0));
+
+                        /**
+                         * Добавление пользователя в локальную БД
+                         */
+                        dbHelper.insertUsers(String.valueOf(fwdMessage.user_id), fwdMessageUser[0]);
+
+                    }
+                });
+            }
+
+            fwdMessagesSenders.add(fwdMessageUser[0]);
+            fwdMessagesBodies.add(fwdMessage.body);
+            fwdMessagesDates.add(getMessageDate(fwdMessage.date));
+
+            int fwdMessageFwdAmount = fwdMessage.fwd_messages.size();
+            if (fwdMessageFwdAmount > 0) {
+                /**
+                 * Если у пересланного сообщения есть пересланные сообщения
+                 */
+                getFwdMessage(fwdMessage, fwdMessagesBodies, fwdMessagesSenders, fwdMessagesDates);
+            }
+
+        }
+    }
+
+    /**
+     * Вторичная инициализация стандартного адаптера вкладок (Без запросо к API)
+     */
     private void initializePageAdapterDefault() {
         mPagerAdapterDefault = new PagerAdapter() {
             /**
@@ -482,13 +1019,40 @@ public class MainActivity extends AppCompatActivity {
                         getBaseContext()).inflate(R.layout.item_vp_list, null, false);
 
                 final RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.rv);
+                final SwipeMenuListView mListView = (SwipeMenuListView) view.findViewById(R.id.listView);
                 setRecyclerViewConfiguration(recyclerView);
 
                 if (position == 0) {
+                    mListView.setVisibility(View.INVISIBLE);
+                    recyclerView.setVisibility(View.VISIBLE);
+
                     recyclerView.setAdapter(mDialogsAdapter);
                 } else if (position == 1) {
+                    mListView.setVisibility(View.VISIBLE);
+                    recyclerView.setVisibility(View.INVISIBLE);
 
-                    recyclerView.setAdapter(mFriendsAdapter);
+                    mListView.setAdapter(mFriendsAdapter);
+                    mListView.setMenuCreator(getSwipeMenuCreatorFriends());
+
+                    mListView.setOnMenuItemClickListener(new SwipeMenuListView.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(int position, SwipeMenu menu, int index) {
+                            if (index == 0) {
+                                openDialogByPosition(position);
+                            }
+                            else if (index == 1) {
+                                mFriendsAdapter.removeFriend(position);
+                            }
+                            return true;
+                        }
+                    });
+
+                    mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                            mListView.smoothOpenMenu(position);
+                        }
+                    });
 
                 } else {
                     /**
@@ -503,6 +1067,65 @@ public class MainActivity extends AppCompatActivity {
             }
         };
     }
+
+    /**
+     * Инициализация меню для смахивания элементов в списке друзей
+     */
+    private SwipeMenuCreator getSwipeMenuCreatorFriends() {
+        return new SwipeMenuCreator() {
+
+            @Override
+            public void create(SwipeMenu menu) {
+                // create "open" item
+                SwipeMenuItem openDialogItem = new SwipeMenuItem(
+                        getApplicationContext());
+                // set item background
+                openDialogItem.setBackground(new ColorDrawable(Color.rgb(0xC9, 0xC9,
+                        0xCE)));
+                // set item width
+                openDialogItem.setWidth(dp2px(72));
+                // set item title
+                openDialogItem.setTitle("Open");
+                // set item title fontsize
+                openDialogItem.setTitleSize(12);
+                // set item title font color
+                openDialogItem.setTitleColor(Color.WHITE);
+                // add to menu
+                menu.addMenuItem(openDialogItem);
+
+                // create "open" item
+                SwipeMenuItem removeFriendItem = new SwipeMenuItem(
+                        getApplicationContext());
+                // set item background
+                removeFriendItem.setBackground(new ColorDrawable(Color.rgb(0xC9, 0xC9,
+                        0xCE)));
+                // set item width
+                removeFriendItem.setWidth(dp2px(72));
+                // set item title
+                removeFriendItem.setTitle("Delete");
+                // set item title fontsize
+                removeFriendItem.setTitleSize(12);
+                // set item title font color
+                removeFriendItem.setTitleColor(Color.WHITE);
+                // add to menu
+                menu.addMenuItem(removeFriendItem);
+            }
+        };
+    }
+
+    /**
+     * Конвертация их dp в px
+     * @param dp - знаичение в dp
+     * @return - значение в px
+     */
+    private int dp2px(int dp) {
+        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp,
+                getResources().getDisplayMetrics());
+    }
+
+    /**
+     * Инициализация адаптера вкладок с поиском пользователей
+     */
     private void initializePageAdapterSearch() {
         mPagerAdapterSearch = new PagerAdapter() {
             /**
@@ -529,11 +1152,18 @@ public class MainActivity extends AppCompatActivity {
                         getBaseContext()).inflate(R.layout.item_vp_list, null, false);
 
                 final RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.rv);
+                final SwipeMenuListView mListView = (SwipeMenuListView) view.findViewById(R.id.listView);
+
                 setRecyclerViewConfiguration(recyclerView);
 
                 if (position == 0) {
+                    mListView.setVisibility(View.INVISIBLE);
+                    recyclerView.setVisibility(View.VISIBLE);
+
                     recyclerView.setAdapter(mDialogsAdapter);
                 } else if (position == 1) {
+                    mListView.setVisibility(View.INVISIBLE);
+                    recyclerView.setVisibility(View.VISIBLE);
 
                     mSearchUsersAdapter = new SearchUsersAdapter(MainActivity.this, new VKList());
                     recyclerView.setAdapter(mSearchUsersAdapter);
@@ -545,12 +1175,166 @@ public class MainActivity extends AppCompatActivity {
 
                     recyclerView.setAdapter(new CustomAdapter(MainActivity.this));
                 }
-
-
                 container.addView(view);
                 return view;
             }
         };
+    }
+
+    /**
+     * Инициализация адаптера вкладок с созданием чата
+     */
+    private void initializePageAdapterCreateChat() {
+        mPagerAdapterCreateChat = new PagerAdapter() {
+            /**
+             * Кол-во вкладок
+             */
+            @Override
+            public int getCount() {
+                return 3;
+            }
+
+            @Override
+            public boolean isViewFromObject(final View view, final Object object) {
+                return view.equals(object);
+            }
+
+            @Override
+            public void destroyItem(final View container, final int position, final Object object) {
+                ((ViewPager) container).removeView((View) object);
+            }
+
+            @Override
+            public Object instantiateItem(final ViewGroup container, final int position) {
+                final View view = LayoutInflater.from(
+                        getBaseContext()).inflate(R.layout.item_vp_list, null, false);
+
+                final RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.rv);
+                final SwipeMenuListView mListView = (SwipeMenuListView) view.findViewById(R.id.listView);
+                setRecyclerViewConfiguration(recyclerView);
+
+                if (position == 0) {
+                    mListView.setVisibility(View.INVISIBLE);
+                    recyclerView.setVisibility(View.VISIBLE);
+
+                    mCreateChatAdapter = new CreateChatAdapter(MainActivity.this, mFriendsAdapter.getListFriends());
+                    recyclerView.setAdapter(mCreateChatAdapter);
+                } else if (position == 1) {
+                    mListView.setVisibility(View.VISIBLE);
+                    recyclerView.setVisibility(View.INVISIBLE);
+
+                    mListView.setAdapter(mFriendsAdapter);
+                    mListView.setMenuCreator(getSwipeMenuCreatorFriends());
+
+                    mListView.setOnMenuItemClickListener(new SwipeMenuListView.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(int position, SwipeMenu menu, int index) {
+                            if (index == 0) {
+                                openDialogByPosition(position);
+                            }
+                            else if (index == 1) {
+                                mFriendsAdapter.removeFriend(position);
+                            }
+                            return true;
+                        }
+                    });
+
+                    mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                            mListView.smoothOpenMenu(position);
+                        }
+                    });
+                } else {
+                    /**
+                     * Вкладка настроек (?)
+                     */
+
+                    recyclerView.setAdapter(new CustomAdapter(MainActivity.this));
+                }
+                container.addView(view);
+                return view;
+            }
+        };
+    }
+
+    /**
+     * Установка адаптера вкладок с созданием чата
+     */
+    private void setCreateChatMode() {
+        mainFab.setImageDrawable(
+                ContextCompat.getDrawable(MainActivity.this,
+                        R.drawable.ic_wechat)
+        );
+
+        viewPager.removeAllViews();
+        viewPager.setAdapter(null);
+        viewPager.setOffscreenPageLimit(3);
+        viewPager.setAdapter(mPagerAdapterCreateChat);
+        viewPager.setCurrentItem(0);
+
+        isSetCreateChatPageAdapter = true;
+        isSetSearchPageAdapter = false;
+    }
+
+    /**
+     * Установка стандартного адаптера вкладок после адаптера вкладок с созданием чата
+     */
+    private void setDefaultModeFromCreateChat() {
+        mainFab.setImageDrawable(
+                ContextCompat.getDrawable(MainActivity.this,
+                        R.drawable.ic_plus)
+        );
+
+        initializePageAdapterDefault();
+        viewPager.removeAllViews();
+        viewPager.setAdapter(null);
+        viewPager.setOffscreenPageLimit(3);
+        viewPager.setAdapter(mPagerAdapterDefault);
+        viewPager.setCurrentItem(0);
+
+        isSetCreateChatPageAdapter = false;
+        isSetSearchPageAdapter = false;
+    }
+
+    /**
+     * Установка адаптера вкладок с поиском пользователей
+     */
+    private void setSearchMode() {
+        mainFab.setImageDrawable(
+                ContextCompat.getDrawable(MainActivity.this,
+                        R.drawable.ic_account_multiple)
+        );
+        mainFab.refreshDrawableState();
+
+        viewPager.removeAllViews();
+        viewPager.setAdapter(null);
+        viewPager.setOffscreenPageLimit(3);
+        viewPager.setAdapter(mPagerAdapterSearch);
+        viewPager.setCurrentItem(1);
+
+        isSetSearchPageAdapter = true;
+        isSetCreateChatPageAdapter = false;
+    }
+
+    /**
+     * Установка стандартного адаптера вкладок после адаптера вкладок с поиском пользователей
+     */
+    private void setDefaultModeFromSearch() {
+        mainFab.setImageDrawable(
+                ContextCompat.getDrawable(MainActivity.this,
+                        R.drawable.ic_plus)
+        );
+
+        initializePageAdapterDefault();
+        viewPager.removeAllViews();
+        viewPager.setAdapter(null);
+        viewPager.setOffscreenPageLimit(3);
+        viewPager.setAdapter(mPagerAdapterDefault);
+        viewPager.setCurrentItem(1);
+
+        isSetSearchPageAdapter = false;
+        isSetCreateChatPageAdapter = false;
     }
 
     /**
@@ -560,11 +1344,9 @@ public class MainActivity extends AppCompatActivity {
 
         viewPager.setOffscreenPageLimit(3);
         viewPager.setAdapter(mPagerAdapterDefault);
-        isSetDefaultPageAdapter = true;
 
-        initializeNavigationTabBar();
-
-        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        isSetCreateChatPageAdapter = false;
+        isSetSearchPageAdapter = false;
 
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -573,26 +1355,24 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageSelected(int position) {
                 if(position == 0) {
-                    fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_eighth));
-                } else if (position == 1) {
-                    fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_fifth));
-                    fab.setOnClickListener(new View.OnClickListener() {
+                    mainFab.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            if (isSetDefaultPageAdapter) {
-                                viewPager.removeAllViews();
-                                viewPager.setAdapter(null);
-                                viewPager.setOffscreenPageLimit(3);
-                                viewPager.setAdapter(mPagerAdapterSearch);
-                                viewPager.setCurrentItem(1);
-                                isSetDefaultPageAdapter = false;
+                            if (!isSetCreateChatPageAdapter) {
+                                setCreateChatMode();
                             } else {
-                                initializePageAdapterDefault();
-                                viewPager.removeAllViews();
-                                viewPager.setAdapter(null);
-                                viewPager.setOffscreenPageLimit(3);
-                                viewPager.setAdapter(mPagerAdapterDefault);
-                                isSetDefaultPageAdapter = true;
+                                setDefaultModeFromCreateChat();
+                            }
+                        }
+                    });
+                } else if (position == 1) {
+                    mainFab.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (!isSetSearchPageAdapter) {
+                               setSearchMode();
+                            } else {
+                               setDefaultModeFromSearch();
                             }
                         }
                     });
@@ -600,9 +1380,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onPageScrollStateChanged(int state) {
-
-            }
+            public void onPageScrollStateChanged(int state) {}
         });
 
 //        findViewById(R.id.fab).setOnClickListener(new View.OnClickListener() {
@@ -625,7 +1403,6 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        });
     }
-
 
     /**
      * Получение имени и фамилии пользователя по его идентификатору через API VK
@@ -704,30 +1481,4 @@ public class MainActivity extends AppCompatActivity {
         return nickname[0];
     }
 
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        if (!VKSdk.onActivityResult(requestCode, resultCode, data, new VKCallback<VKAccessToken>() {
-//            @Override
-//            public void onResult(VKAccessToken res) {
-//                // Пользователь успешно авторизовался
-//                /**
-//                 * Инициализация таблицы пользователей в локальной БД при успешной авторизации
-//                 */
-////                initializeUsersTable();
-////                initializeMessagesTable();
-//                /**
-//                 * Формирование пользовательского интерфейса после успешной авторизации
-//                 */
-//                initUI();
-//
-//            }
-//            @Override
-//            public void onError(VKError error) {
-//                // Произошла ошибка авторизации (например, пользователь запретил авторизацию)
-//                Toast.makeText(getApplicationContext(), "Fail", Toast.LENGTH_SHORT).show();
-//            }
-//        })) {
-//            super.onActivityResult(requestCode, resultCode, data);
-//        }
-//    }
 }

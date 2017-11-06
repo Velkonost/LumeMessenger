@@ -6,6 +6,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -22,6 +23,7 @@ import com.vk.sdk.api.model.VKList;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -29,9 +31,11 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_MESSAGES;
+import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.AMOUNT_DIALOGS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.AMOUNT_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.COUNT;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ID;
+import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.OFFSET;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_BODIES_LISTS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_DATES_LISTS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_SENDERS_LISTS;
@@ -40,9 +44,12 @@ import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_DATE
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_IDS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_IS_OUT;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_SENDERS;
+import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.BODY;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.CHAT_ID;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.ITEMS;
+import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.MESSAGE;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.RESPONSE;
+import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.TITLE;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.USER_ID;
 
 /**
@@ -54,6 +61,7 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
      * Список имен пользователей
      */
     private ArrayList<String> users;
+
     /**
      * Список тел сообщений
      */
@@ -61,9 +69,17 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
 
     private Context ctx;
 
+    /**
+     * Список идентификаторов диалогов
+     */
     private ArrayList<String> idsList;
 
     private DBHelper dbHelper;
+
+    /**
+     * Количество уже отображаемых диалогов в списке
+     */
+    private int alreadyShowedDialogsAmount;
 
     public DialogsAdapter(ArrayList<String> users, ArrayList<String> messages,
                           Context ctx, ArrayList<String> idsList, DBHelper dbHelper) {
@@ -73,199 +89,282 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
 
         this.idsList = idsList;
         this.dbHelper = dbHelper;
+
+        alreadyShowedDialogsAmount = 0;
     }
 
     @Override
     public ViewHolder onCreateViewHolder(final ViewGroup parent, final int viewType) {
-        final View view = LayoutInflater.from(ctx).inflate(R.layout.item_vkontakte_dialog, parent, false);
-        return new ViewHolder(view);
+        View view;
+        if (viewType == 0) {
+            view = LayoutInflater.from(ctx).inflate(R.layout.item_vkontakte_btn_show_more, parent, false);
+            //Create viewholder for your default cell
+            return new ViewHolder(view, true);
+
+        } else {
+            view = LayoutInflater.from(ctx).inflate(R.layout.item_vkontakte_dialog, parent, false);
+            //Create viewholder for your footer view
+            return new ViewHolder(view, false);
+        }
+
     }
 
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
+        if (position == users.size() - 1) {
+            holder.btnShowMore.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    alreadyShowedDialogsAmount += AMOUNT_DIALOGS;
+                    VKRequest requestUpdatedDialogs = VKApi.messages().getDialogs(VKParameters.from(
+                            COUNT, AMOUNT_DIALOGS,
+                            OFFSET, alreadyShowedDialogsAmount
+                    ));
 
-        holder.dialogName.setText(users.get(position));
-        holder.lastMessage.setText(messages.get(position));
+                    requestUpdatedDialogs.executeWithListener(new VKRequest.VKRequestListener() {
+                        @Override
+                        public void onComplete(VKResponse response) {
+                            JSONObject jsonResponse = null;
+                            try {
+                                jsonResponse = (JSONObject) response.json.get(RESPONSE);
+                                JSONArray messagesJSONArray = jsonResponse.getJSONArray(ITEMS);
 
-        /**
-         * Открытие диалога - переход к последним сообщениям
-         */
-        holder.dialogBlock.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+                                for (int i = 0; i < messagesJSONArray.length(); i++) {
+                                    JSONObject jsonMessage = (JSONObject) messagesJSONArray.get(i);
+                                    jsonMessage = jsonMessage.getJSONObject(MESSAGE);
 
-                /**
-                 * Список идентификаторов сообщений
-                 */
-                final ArrayList<String> messagesIds = new ArrayList<>();
-
-                /**
-                 * Список тел сообщений
-                 */
-                final ArrayList<String> messagesBodies = new ArrayList<>();
-
-                /**
-                 * Булевский список направлений сообщений (отправлено от авторизованного сообщения)
-                 */
-                final ArrayList<Boolean> messagesIsOut = new ArrayList<>();
-
-                /**
-                 * Список отправителей сообщений
-                 */
-                final ArrayList<String> messagesSenders = new ArrayList<>();
-
-                /**
-                 * Список дат сообщений
-                 */
-                final ArrayList<String> messagesDates = new ArrayList<>();
-
-                /**
-                 * Список списков тел пересланных сообщений
-                 */
-                final ArrayList< ArrayList<String> > fwdMessagesBodiesLists = new ArrayList<>();
-
-                /**
-                 * Список списков отправителей пересланных сообщений
-                 */
-                final ArrayList< ArrayList<String> > fwdMessagesSendersLists = new ArrayList<>();
-
-                /**
-                 * Список списков дат пересланных сообщений
-                 */
-                final ArrayList< ArrayList<String> > fwdMessagesDatesLists = new ArrayList<>();
-
-                /**
-                 * Идентификатор диалога
-                 */
-                final String id = idsList.get(position);
-
-                /**
-                 * Определение типа диалога
-                 */
-                final String typeOfDialog = Integer.parseInt(id) < 100000000 ? CHAT_ID : USER_ID;
-
-                /**
-                 * Определен ли отправитель? (для личных диалого)
-                 */
-                final boolean[] isSenderDetected = {false};
-
-                /**
-                 * Полное имя отправителя сообщения
-                 */
-                final String[] senderNickname = new String[1];
-
-                /**
-                 * Переменная для временного хранения имени отправителя
-                 */
-                final String[] senderNicknameTemp = new String[1];
-
-                /**
-                 * Получение "count" последних сообщений диалога
-                 */
-                VKRequest request = new VKRequest(GET_MESSAGES, VKParameters.from(typeOfDialog, id, COUNT, AMOUNT_MESSAGES));
-                request.executeWithListener(new VKRequest.VKRequestListener() {
-                    @Override
-                    public void onComplete(VKResponse response) {
-                        super.onComplete(response);
-
-                        try {
-                            JSONArray array = response.json.getJSONObject(RESPONSE).getJSONArray(ITEMS);
-                            VKApiMessage[] msg = new VKApiMessage[array.length()];
-
-                            for (int i = 0; i < array.length(); i++) {
-                                VKApiMessage mes = new VKApiMessage(array.getJSONObject(i));
-                                msg[i] = mes;
-                            }
-
-                            for (final VKApiMessage message : msg) {
-
-                                /**
-                                 * Список тел пересланных сообщений
-                                 */
-                                ArrayList<String> fwdMessagesBodies = new ArrayList<>();
-
-                                /**
-                                 * Список отправителей пересланных сообщений
-                                 */
-                                ArrayList<String> fwdMessagesSenders = new ArrayList<>();
-
-                                /**
-                                 * Список дат пересланных сообщений
-                                 */
-                                ArrayList<String> fwdMessagesDates = new ArrayList<>();
-
-                                /**
-                                 * Получение данных о пересланных сообщениях
-                                 */
-                                getFwdMessage(message, fwdMessagesBodies, fwdMessagesSenders, fwdMessagesDates);
-
-                                if (typeOfDialog.equals(USER_ID)) {
-                                    /**
-                                     * Если диалог - личная переписка
-                                     */
-                                    if (!isSenderDetected[0]) {
-                                        senderNicknameTemp[0] = getNicknameById(String.valueOf(message.user_id));
-                                        isSenderDetected[0] = true;
+                                    String chatId;
+                                    try {
+                                        chatId = jsonMessage.getString(CHAT_ID);
+                                    } catch (JSONException e) {
+                                        chatId = jsonMessage.getString(USER_ID);
                                     }
 
-                                    if (message.out) {
-                                        /**
-                                         * Если авторизованный пользователь - отправитель сообщения
-                                         */
-                                        senderNickname[0] = "Я";
+                                    idsList.add(chatId);
+
+                                    final String[] dialogTitle = {jsonMessage.getString(TITLE)};
+
+                                    if (dialogTitle[0].equals("")) {
+                                        VKRequest request = VKApi.users().get(
+                                                VKParameters.from(
+                                                        VKApiConst.USER_ID,
+                                                        jsonMessage.getString(USER_ID)
+                                                )
+                                        );
+
+                                        request.executeSyncWithListener(new VKRequest.VKRequestListener() {
+                                            @Override
+                                            public void onComplete(VKResponse response) {
+                                                super.onComplete(response);
+
+                                                VKList list = (VKList) response.parsedModel;
+                                                dialogTitle[0] = String.valueOf(list.get(0));
+                                                users.add(String.valueOf(dialogTitle[0]));
+                                            }
+                                        });
                                     } else {
-                                        senderNickname[0] = senderNicknameTemp[0];
+                                        users.add(dialogTitle[0]);
                                     }
-
-                                } else {
-                                    if (message.out) {
-                                        /**
-                                         * Если авторизованный пользователь - отправитель сообщения
-                                         */
-                                        senderNickname[0] = "Я";
-                                    } else {
-                                        senderNickname[0] = getNicknameById(String.valueOf(message.user_id));
-                                    }
+                                    messages.add(jsonMessage.getString(BODY) + " ");
                                 }
-
-                                fwdMessagesBodiesLists.add(fwdMessagesBodies);
-                                fwdMessagesDatesLists.add(fwdMessagesDates);
-                                fwdMessagesSendersLists.add(fwdMessagesSenders);
-
-                                messagesIds.add(String.valueOf(message.id));
-                                messagesBodies.add(message.body);
-                                messagesIsOut.add(message.out);
-                                messagesDates.add(getMessageDate(message.date));
-                                messagesSenders.add(senderNickname[0]);
-
+                            } catch (JSONException e) {
+                                e.printStackTrace();
                             }
-
-                            /**
-                             * Открытие новой активности, передача полученный данных о сообщениях
-                             */
-                            ctx.startActivity(new Intent(ctx, MessagesActivity.class)
-                                    .putExtra(ID, id)
-                                    .putExtra(MESSAGES_IDS, messagesIds)
-                                    .putExtra(MESSAGES_BODIES, messagesBodies)
-                                    .putExtra(MESSAGES_IS_OUT, messagesIsOut)
-                                    .putExtra(MESSAGES_DATES, messagesDates)
-                                    .putExtra(MESSAGES_SENDERS, messagesSenders)
-                                    .putExtra(FWD_MESSAGES_BODIES_LISTS, fwdMessagesBodiesLists)
-                                    .putExtra(FWD_MESSAGES_DATES_LISTS, fwdMessagesDatesLists)
-                                    .putExtra(FWD_MESSAGES_SENDERS_LISTS, fwdMessagesSendersLists)
-                            );
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
+                            super.onComplete(response);
                         }
-                    }
-                });
-            }
-        });
+                    });
+                }
+            });
+        } else {
+            holder.dialogName.setText(users.get(position));
+            holder.lastMessage.setText(messages.get(position));
+
+            /**
+             * Открытие диалога - переход к последним сообщениям
+             */
+            holder.dialogBlock.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    openDialogByPosition(position);
+                }
+            });
+        }
 
     }
 
+    private void openDialogByPosition(int position) {
+        /**
+         * Список идентификаторов сообщений
+         */
+        final ArrayList<String> messagesIds = new ArrayList<>();
+
+        /**
+         * Список тел сообщений
+         */
+        final ArrayList<String> messagesBodies = new ArrayList<>();
+
+        /**
+         * Булевский список направлений сообщений (отправлено от авторизованного сообщения)
+         */
+        final ArrayList<Boolean> messagesIsOut = new ArrayList<>();
+
+        /**
+         * Список отправителей сообщений
+         */
+        final ArrayList<String> messagesSenders = new ArrayList<>();
+
+        /**
+         * Список дат сообщений
+         */
+        final ArrayList<String> messagesDates = new ArrayList<>();
+
+        /**
+         * Список списков тел пересланных сообщений
+         */
+        final ArrayList< ArrayList<String> > fwdMessagesBodiesLists = new ArrayList<>();
+
+        /**
+         * Список списков отправителей пересланных сообщений
+         */
+        final ArrayList< ArrayList<String> > fwdMessagesSendersLists = new ArrayList<>();
+
+        /**
+         * Список списков дат пересланных сообщений
+         */
+        final ArrayList< ArrayList<String> > fwdMessagesDatesLists = new ArrayList<>();
+
+        /**
+         * Идентификатор диалога
+         */
+        final String id = idsList.get(position);
+
+        /**
+         * Определение типа диалога
+         */
+        final String typeOfDialog = Integer.parseInt(id) < 100000000 ? CHAT_ID : USER_ID;
+
+        /**
+         * Определен ли отправитель? (для личных диалого)
+         */
+        final boolean[] isSenderDetected = {false};
+
+        /**
+         * Полное имя отправителя сообщения
+         */
+        final String[] senderNickname = new String[1];
+
+        /**
+         * Переменная для временного хранения имени отправителя
+         */
+        final String[] senderNicknameTemp = new String[1];
+
+        /**
+         * Получение "count" последних сообщений диалога
+         */
+        VKRequest request = new VKRequest(
+                GET_MESSAGES,
+                VKParameters.from(typeOfDialog, id, COUNT, AMOUNT_MESSAGES)
+        );
+
+        request.executeWithListener(new VKRequest.VKRequestListener() {
+            @Override
+            public void onComplete(VKResponse response) {
+                super.onComplete(response);
+
+                try {
+                    JSONArray array = response.json.getJSONObject(RESPONSE).getJSONArray(ITEMS);
+                    VKApiMessage[] msg = new VKApiMessage[array.length()];
+
+                    for (int i = 0; i < array.length(); i++) {
+                        VKApiMessage mes = new VKApiMessage(array.getJSONObject(i));
+                        msg[i] = mes;
+                    }
+
+                    for (final VKApiMessage message : msg) {
+
+                        /**
+                         * Список тел пересланных сообщений
+                         */
+                        ArrayList<String> fwdMessagesBodies = new ArrayList<>();
+
+                        /**
+                         * Список отправителей пересланных сообщений
+                         */
+                        ArrayList<String> fwdMessagesSenders = new ArrayList<>();
+
+                        /**
+                         * Список дат пересланных сообщений
+                         */
+                        ArrayList<String> fwdMessagesDates = new ArrayList<>();
+
+                        /**
+                         * Получение данных о пересланных сообщениях
+                         */
+                        getFwdMessage(message, fwdMessagesBodies, fwdMessagesSenders, fwdMessagesDates);
+
+                        if (typeOfDialog.equals(USER_ID)) {
+                            /**
+                             * Если диалог - личная переписка
+                             */
+                            if (!isSenderDetected[0]) {
+                                senderNicknameTemp[0] = getNicknameById(String.valueOf(message.user_id));
+                                isSenderDetected[0] = true;
+                            }
+
+                            if (message.out) {
+                                /**
+                                 * Если авторизованный пользователь - отправитель сообщения
+                                 */
+                                senderNickname[0] = "Я";
+                            } else {
+                                senderNickname[0] = senderNicknameTemp[0];
+                            }
+
+                        } else {
+                            if (message.out) {
+                                /**
+                                 * Если авторизованный пользователь - отправитель сообщения
+                                 */
+                                senderNickname[0] = "Я";
+                            } else {
+                                senderNickname[0] = getNicknameById(String.valueOf(message.user_id));
+                            }
+                        }
+
+                        fwdMessagesBodiesLists.add(fwdMessagesBodies);
+                        fwdMessagesDatesLists.add(fwdMessagesDates);
+                        fwdMessagesSendersLists.add(fwdMessagesSenders);
+
+                        messagesIds.add(String.valueOf(message.id));
+                        messagesBodies.add(message.body);
+                        messagesIsOut.add(message.out);
+                        messagesDates.add(getMessageDate(message.date));
+                        messagesSenders.add(senderNickname[0]);
+
+                    }
+
+                    /**
+                     * Открытие новой активности, передача полученный данных о сообщениях
+                     */
+                    ctx.startActivity(new Intent(ctx, MessagesActivity.class)
+                            .putExtra(ID, id)
+                            .putExtra(MESSAGES_IDS, messagesIds)
+                            .putExtra(MESSAGES_BODIES, messagesBodies)
+                            .putExtra(MESSAGES_IS_OUT, messagesIsOut)
+                            .putExtra(MESSAGES_DATES, messagesDates)
+                            .putExtra(MESSAGES_SENDERS, messagesSenders)
+                            .putExtra(FWD_MESSAGES_BODIES_LISTS, fwdMessagesBodiesLists)
+                            .putExtra(FWD_MESSAGES_DATES_LISTS, fwdMessagesDatesLists)
+                            .putExtra(FWD_MESSAGES_SENDERS_LISTS, fwdMessagesSendersLists)
+                    );
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
 
     /**
      * Получение имени и фамилии пользователя по его идентификатору
@@ -363,10 +462,38 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
     }
 
 
+    public void setUsers(ArrayList<String> users) {
+        this.users = users;
+    }
+
+    public void setMessages(ArrayList<String> messages) {
+        this.messages = messages;
+    }
+
+    public void setIdsList(ArrayList<String> idsList) {
+        this.idsList = idsList;
+    }
+
+    public ArrayList<String> getUsers() {
+        return users;
+    }
+
+    public ArrayList<String> getMessages() {
+        return messages;
+    }
+
+    public ArrayList<String> getIdsList() {
+        return idsList;
+    }
 
     @Override
     public int getItemCount() {
         return users.size();
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return (position == users.size() - 1) ? 0 : 1;
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
@@ -386,13 +513,18 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
          */
         TextView lastMessage;
 
-        ViewHolder(final View itemView) {
+        Button btnShowMore;
+
+        ViewHolder(final View itemView, boolean last) {
             super(itemView);
+            if (last) {
+                btnShowMore = (Button) itemView.findViewById(R.id.show_more);
+            } else {
+                dialogBlock = (LinearLayout) itemView.findViewById(R.id.dialog_block);
 
-            dialogBlock = (LinearLayout) itemView.findViewById(R.id.dialog_block);
-
-            dialogName = (TextView) itemView.findViewById(R.id.txt_vp_item_list);
-            lastMessage = (TextView) itemView.findViewById(R.id.txt_vp_item_list2);
+                dialogName = (TextView) itemView.findViewById(R.id.txt_vp_item_list);
+                lastMessage = (TextView) itemView.findViewById(R.id.txt_vp_item_list2);
+            }
         }
     }
 }

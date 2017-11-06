@@ -17,6 +17,7 @@ import com.vk.sdk.api.VKParameters;
 import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
 import com.vk.sdk.api.model.VKList;
+import com.wang.avi.AVLoadingIndicatorView;
 
 import org.json.JSONException;
 
@@ -40,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
      */
     private DBHelper dbHelper;
 
+    private AVLoadingIndicatorView loadingView;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,12 +55,11 @@ public class MainActivity extends AppCompatActivity {
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Intent intent = new Intent(MainActivity.this, com.velkonost.lume.vkontakte.activities.MainActivity.class);
-                //MainActivity.this.startActivity(intent);
                 if(VKSdk.isLoggedIn()) {
                     startActivity(new Intent(MainActivity.this, com.velkonost.lume.vkontakte.activities.MainActivity.class));
-//            finish();
                 } else {
+                    loadingView = (AVLoadingIndicatorView) findViewById(R.id.load_view);
+                    loadingView.animate().alpha(1.0f).setDuration(500);
                     VKSdk.login(MainActivity.this, scope);
                 }
 
@@ -86,13 +88,10 @@ public class MainActivity extends AppCompatActivity {
         if (!VKSdk.onActivityResult(requestCode, resultCode, data, new VKCallback<VKAccessToken>() {
             @Override
             public void onResult(VKAccessToken res) {
-                // Пользователь успешно авторизовался
-                //Toast.makeText(getApplicationContext(), "Good", Toast.LENGTH_LONG).show();
-                // startActivity(new Intent(MainActivity.this, AllAct.class));
-                //finish();
+                // Пользователь успешно авторизовался - VK
                 initializeUsersTable();
+                loadingView.animate().alpha(0.0f).setDuration(1500);
                 startActivity(new Intent(MainActivity.this, com.velkonost.lume.vkontakte.activities.MainActivity.class));
-//                finish();
             }
 
             @Override
