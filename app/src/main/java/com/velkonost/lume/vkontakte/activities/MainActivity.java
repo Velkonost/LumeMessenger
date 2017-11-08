@@ -577,7 +577,9 @@ public class MainActivity extends AppCompatActivity {
         /**
          * Получение информации о друзьях авторизованного пользователя
          */
-        final VKRequest requestFriends = VKApi.friends().get(VKParameters.from(FIELDS, FIRST_NAME + COMMA + LAST_NAME + COMMA + ID));
+        final VKRequest requestFriends = VKApi.friends().get(
+                VKParameters.from(FIELDS, FIRST_NAME + COMMA + LAST_NAME + COMMA + ID + COMMA + PHOTO_50)
+        );
 
         requestFriends.executeWithListener(new VKRequest.VKRequestListener() {
             @Override
@@ -590,7 +592,11 @@ public class MainActivity extends AppCompatActivity {
                         /**
                          * Добавление пользователя в локальную БД
                          */
-                        dbHelper.insertUsers(list.get(i).fields.getString(ID), list.get(i).toString());
+                        dbHelper.insertUsers(
+                                list.get(i).fields.getString(ID),
+                                list.get(i).toString(),
+                                list.get(i).fields.getString(PHOTO_50)
+                        );
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -957,7 +963,7 @@ public class MainActivity extends AppCompatActivity {
 
             final String[] fwdMessageUser = {dbHelper.getFromUsersNicknameById(String.valueOf(fwdMessage.user_id))};
             if (fwdMessageUser[0] == null) {
-                VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, fwdMessage.user_id));
+                VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, fwdMessage.user_id, FIELDS, PHOTO_50));
                 request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                     @Override
                     public void onComplete(VKResponse response) {
@@ -966,10 +972,15 @@ public class MainActivity extends AppCompatActivity {
                         VKList list = (VKList) response.parsedModel;
                         fwdMessageUser[0] = String.valueOf(list.get(0));
 
+                        try {
+                            String photo50Url = list.get(0).fields.getString(PHOTO_50);
+                            dbHelper.insertUsers(String.valueOf(fwdMessage.user_id), fwdMessageUser[0], photo50Url);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         /**
                          * Добавление пользователя в локальную БД
                          */
-                        dbHelper.insertUsers(String.valueOf(fwdMessage.user_id), fwdMessageUser[0]);
 
                     }
                 });
@@ -1411,7 +1422,7 @@ public class MainActivity extends AppCompatActivity {
             final String chatId,
             final VKApiMessage message
     ) {
-        final VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, message.user_id));
+        final VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, message.user_id, FIELDS, PHOTO_50));
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override
@@ -1430,9 +1441,12 @@ public class MainActivity extends AppCompatActivity {
 
                         VKList list = (VKList) response.parsedModel;
                         String nickname = String.valueOf(list.get(0));
-                        dbHelper.insertUsers(String.valueOf(message.user_id), nickname);
-//                        addNewMessageInDB(chatId, message, nickname);
-
+                        try {
+                            String photo50Url = list.get(0).fields.getString(PHOTO_50);
+                            dbHelper.insertUsers(String.valueOf(message.user_id), nickname, photo50Url);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
                 });
             }
@@ -1452,7 +1466,7 @@ public class MainActivity extends AppCompatActivity {
             /**
              * Иначе через API VK
              */
-            final VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, id));
+            final VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, id, FIELDS, PHOTO_50));
             Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
                 @Override
@@ -1471,7 +1485,13 @@ public class MainActivity extends AppCompatActivity {
 
                             VKList list = (VKList) response.parsedModel;
                             nickname[0] = String.valueOf(list.get(0));
-                            dbHelper.insertUsers(id, nickname[0]);
+
+                            try {
+                                String photo50Url = list.get(0).fields.getString(PHOTO_50);
+                                dbHelper.insertUsers(id, nickname[0], photo50Url);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
 
                         }
                     });

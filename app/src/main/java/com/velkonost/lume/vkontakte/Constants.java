@@ -75,6 +75,7 @@ public class Constants {
         public static final String MESSAGES_IDS = "messagesIds";
         public static final String MESSAGES_BODIES = "messagesBodies";
         public static final String MESSAGES_SENDERS = "messagesSenders";
+        public static final String MESSAGES_SENDERS_IDS = "messagesSendersIds";
         public static final String MESSAGES_IS_OUT = "messagesIsOut";
         public static final String MESSAGES_DATES = "messagesDates";
 

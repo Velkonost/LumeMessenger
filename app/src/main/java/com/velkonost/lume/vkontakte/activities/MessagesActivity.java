@@ -57,10 +57,12 @@ import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_DATE
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_IDS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_IS_OUT;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_SENDERS;
+import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_SENDERS_IDS;
 import static com.velkonost.lume.vkontakte.Constants.REFRESH_MESSAGES_PERIOD;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.CHAT_ID;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.ITEMS;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.MESSAGES;
+import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.PHOTO_50;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.RESPONSE;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.USER_ID;
 
@@ -85,6 +87,8 @@ public class MessagesActivity extends AppCompatActivity {
      * Список отправителей сообщений
      */
     ArrayList<String> messagesSenders = new ArrayList<>();
+
+    ArrayList<String> messagesSendersIds = new ArrayList<>();
 
     /**
      * Булевский список отправлений сообщений (сообщение отправление от авторизованного пользователя?)
@@ -236,6 +240,7 @@ public class MessagesActivity extends AppCompatActivity {
         messagesIds = getIntent().getStringArrayListExtra(MESSAGES_IDS);
         messagesBodies = getIntent().getStringArrayListExtra(MESSAGES_BODIES);
         messagesSenders = getIntent().getStringArrayListExtra(MESSAGES_SENDERS);
+        messagesSendersIds = getIntent().getStringArrayListExtra(MESSAGES_SENDERS_IDS);
         messagesIsOut = getIntent().getStringArrayListExtra(MESSAGES_IS_OUT);
         messagesDates = getIntent().getStringArrayListExtra(MESSAGES_DATES);
 
@@ -250,8 +255,8 @@ public class MessagesActivity extends AppCompatActivity {
     private void initializeMessagesList() {
         messagesList =
                 new MessagesList(
-                        messagesIds, messagesBodies,
-                        messagesDates, messagesSenders, messagesIsOut,
+                        messagesIds, messagesBodies, messagesDates,
+                        messagesSenders, messagesSendersIds, messagesIsOut,
                         fwdMessagesBodiesLists, fwdMessagesDatesLists, fwdMessagesSendersLists
                 );
 
@@ -264,6 +269,7 @@ public class MessagesActivity extends AppCompatActivity {
         Arrays.sort(messagesIds.toArray(), Collections.reverseOrder());
         Arrays.sort(messagesBodies.toArray(), Collections.reverseOrder());
         Arrays.sort(messagesSenders.toArray(), Collections.reverseOrder());
+        Arrays.sort(messagesSendersIds.toArray(), Collections.reverseOrder());
         Arrays.sort(messagesIsOut.toArray(), Collections.reverseOrder());
         Arrays.sort(messagesDates.toArray(), Collections.reverseOrder());
 
@@ -355,7 +361,7 @@ public class MessagesActivity extends AppCompatActivity {
 
                 final String[] fwdMessageUser = {dbHelper.getFromUsersNicknameById(String.valueOf(fwdMessage.user_id))};
                 if (fwdMessageUser[0] == null) {
-                    VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, fwdMessage.user_id));
+                    VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, fwdMessage.user_id, FIELDS, PHOTO_50));
                     request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                         @Override
                         public void onComplete(VKResponse response) {
@@ -364,10 +370,16 @@ public class MessagesActivity extends AppCompatActivity {
                             VKList list = (VKList) response.parsedModel;
                             fwdMessageUser[0] = String.valueOf(list.get(0));
 
+                            try {
+                                String photo50Url = String.valueOf(list.get(0).fields.get(PHOTO_50));
+                                dbHelper.insertUsers(String.valueOf(fwdMessage.user_id), fwdMessageUser[0], photo50Url);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
                             /**
                              * Добавление пользователя в локальную БД
                              */
-                            dbHelper.insertUsers(String.valueOf(fwdMessage.user_id), fwdMessageUser[0]);
 
                         }
                     });
@@ -538,7 +550,7 @@ public class MessagesActivity extends AppCompatActivity {
             /**
              * Иначе через API VK
              */
-            VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, id));
+            VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, id, FIELDS, PHOTO_50));
             request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                 @Override
                 public void onComplete(VKResponse response) {
@@ -546,7 +558,12 @@ public class MessagesActivity extends AppCompatActivity {
 
                     VKList list = (VKList) response.parsedModel;
                     nickname[0] = String.valueOf(list.get(0));
-                    dbHelper.insertUsers(id, nickname[0]);
+                    try {
+                        String photo50Url = String.valueOf(list.get(0).fields.get(PHOTO_50));
+                        dbHelper.insertUsers(id, nickname[0], photo50Url);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
 
                 }
             });

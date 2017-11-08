@@ -50,6 +50,7 @@ public class DBHelper extends SQLiteOpenHelper{
         db.execSQL("create table if not exists " + TABLE_PREFIX + USERS + " ("
                 + "id integer primary key autoincrement,"
                 + "nickname text,"
+                + "photo_50_url text,"
                 + "user_id text" + ");");
     }
 
@@ -111,7 +112,7 @@ public class DBHelper extends SQLiteOpenHelper{
      * @param id - идентификатор пользователя
      * @param nickname - полное имя пользователя
      */
-    public void insertUsers(String id, String nickname) {
+    public void insertUsers(String id, String nickname, String photo50Url) {
         if (this.getWritableDatabase().query(TABLE_PREFIX + USERS,
                 null,
                 "user_id = ?",
@@ -120,6 +121,7 @@ public class DBHelper extends SQLiteOpenHelper{
             ContentValues cvColumn = new ContentValues();
             cvColumn.put("nickname", nickname);
             cvColumn.put("user_id", id);
+            cvColumn.put("photo_50_url", photo50Url);
             this.getWritableDatabase().insert(TABLE_PREFIX + USERS, null, cvColumn);
         }
     }
@@ -262,6 +264,20 @@ public class DBHelper extends SQLiteOpenHelper{
         if (c.moveToFirst()) {
             int nicknameIndex = c.getColumnIndex("nickname");
             return c.getString(nicknameIndex);
+        }
+        return null;
+    }
+
+    public String getFromUsersPhoto50UrlById(String id) {
+        Cursor c = this.getWritableDatabase().query(TABLE_PREFIX + USERS,
+                null,
+                "user_id = ?",
+                new String[] {id},
+                null, null, null);
+
+        if (c.moveToFirst()) {
+            int photo50UrlIndex = c.getColumnIndex("photo_50_url");
+            return c.getString(photo50UrlIndex);
         }
         return null;
     }

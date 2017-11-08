@@ -1,7 +1,6 @@
 package com.velkonost.lume.vkontakte.adapters;
 
 import android.content.Context;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -13,10 +12,12 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
 import com.velkonost.lume.R;
 import com.velkonost.lume.vkontakte.activities.MessagesActivity;
 import com.velkonost.lume.vkontakte.db.DBHelper;
 import com.velkonost.lume.vkontakte.models.MessagesList;
+import com.velkonost.lume.vkontakte.models.RoundImageView;
 import com.vk.sdk.api.VKApi;
 import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKParameters;
@@ -36,9 +37,11 @@ import java.util.TimeZone;
 import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.AMOUNT_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.COUNT;
+import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIELDS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.START_MESSAGE_ID;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.CHAT_ID;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.ITEMS;
+import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.PHOTO_50;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.RESPONSE;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.USER_ID;
 
@@ -58,7 +61,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private DBHelper dbHelper;
 
     private MessagesActivity mMessagesActivity;
-
 
     private int countMessagesOutRow;
     private int countMessagesInRow;
@@ -213,7 +215,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                 messagesList.addMessage(
                                         String.valueOf(message.id), message.body,
                                         getMessageDate(message.date), senderNickname[0],
-                                        String.valueOf(message.out),
+                                        String.valueOf(message.user_id), String.valueOf(message.out),
                                         fwdMessagesBodies, fwdMessagesSenders, fwdMessagesDates
                                 );
                             }
@@ -225,6 +227,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 }
             });
         } else {
+
             holder.messageWrap.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
@@ -246,13 +249,34 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     RelativeLayout.LayoutParams.WRAP_CONTENT);
 
             if (messagesList.getMessageIsOutByPosition(position).equals("true")) {
+                holder.messageSentIcon.setVisibility(View.VISIBLE);
+                holder.messageReceivedIcon.setVisibility(View.INVISIBLE);
 
-                holder.messageBackground.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.message_neutral));
+//                Picasso
+//                        .with(ctx)
+//                        .load(dbHelper.getFromUsersPhoto50UrlById("0"))
+//                        .transform(new RoundImageView())
+//                        .into(holder.userPhotoSent);
+
+//                holder.userPhotoSent.setVisibility(View.VISIBLE);
+                holder.userPhotoReceived.setVisibility(View.INVISIBLE);
+
                 params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
 
             } else {
-                holder.messageBackground.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.message_neutral));
-                params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                holder.messageSentIcon.setVisibility(View.INVISIBLE);
+                holder.messageReceivedIcon.setVisibility(View.VISIBLE);
+
+                Picasso
+                        .with(ctx)
+                        .load(dbHelper.getFromUsersPhoto50UrlById(messagesList.getSenderIdsByPosition(position)))
+                        .transform(new RoundImageView())
+                        .into(holder.userPhotoReceived);
+
+//                holder.userPhotoSent.setVisibility(View.INVISIBLE);
+                holder.userPhotoReceived.setVisibility(View.VISIBLE);
+
+//                params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
             }
 
             holder.messageWrap.setLayoutParams(params);
@@ -309,7 +333,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
             final String[] fwdMessageUser = {dbHelper.getFromUsersNicknameById(String.valueOf(fwdMessage.user_id))};
             if (fwdMessageUser[0] == null) {
-                VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, fwdMessage.user_id));
+                VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, fwdMessage.user_id, FIELDS, PHOTO_50));
                 request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                     @Override
                     public void onComplete(VKResponse response) {
@@ -318,10 +342,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         VKList list = (VKList) response.parsedModel;
                         fwdMessageUser[0] = String.valueOf(list.get(0));
 
+                        try {
+                            String photo50Url = String.valueOf(list.get(0).fields.get(PHOTO_50));
+                            dbHelper.insertUsers(String.valueOf(fwdMessage.user_id), fwdMessageUser[0], photo50Url);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         /**
                          * Добавление пользователя в локальную БД
                          */
-                        dbHelper.insertUsers(String.valueOf(fwdMessage.user_id), fwdMessageUser[0]);
 
                     }
                 });
@@ -368,7 +397,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             /**
              * Иначе через API VK
              */
-            VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, id));
+            VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, id, FIELDS, PHOTO_50));
             request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                 @Override
                 public void onComplete(VKResponse response) {
@@ -376,7 +405,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
                     VKList list = (VKList) response.parsedModel;
                     nickname[0] = String.valueOf(list.get(0));
-                    dbHelper.insertUsers(id, nickname[0]);
+                    try {
+                        String photo50Url = String.valueOf(list.get(0).fields.get(PHOTO_50));
+                        dbHelper.insertUsers(id, nickname[0], photo50Url);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
 
                 }
             });
@@ -410,7 +445,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         Button btnShowMore;
 
+        ImageView userPhotoReceived;
+        ImageView userPhotoSent;
+
         ImageView messageBackground;
+        ImageView messageSentIcon;
+        ImageView messageReceivedIcon;
 
         ViewHolder(final View itemView, boolean last) {
             super(itemView);
@@ -425,7 +465,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 messageDate = (TextView) itemView.findViewById(R.id.message_date);
                 messageBackground = (ImageView) itemView.findViewById(R.id.message_background);
 
+                userPhotoReceived = (ImageView) itemView.findViewById(R.id.user_photo_received);
+                userPhotoSent = (ImageView) itemView.findViewById(R.id.user_photo_sent);
+
                 rvFwdMessages = (RecyclerView) itemView.findViewById(R.id.fwd_messages_rv);
+                messageSentIcon = (ImageView) itemView.findViewById(R.id.message_sent_icon);
+                messageReceivedIcon = (ImageView) itemView.findViewById(R.id.message_received_icon);
+
             }
         }
     }
