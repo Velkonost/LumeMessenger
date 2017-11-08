@@ -341,7 +341,6 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
                         messagesIsOut.add(message.out);
                         messagesDates.add(getMessageDate(message.date));
                         messagesSenders.add(senderNickname[0]);
-
                     }
 
                     /**

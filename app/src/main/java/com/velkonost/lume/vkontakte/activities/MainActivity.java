@@ -1280,7 +1280,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Установка стандартного адаптера вкладок после адаптера вкладок с созданием чата
      */
-    private void setDefaultModeFromCreateChat() {
+    public void setDefaultModeFromCreateChat() {
         mainFab.setImageDrawable(
                 ContextCompat.getDrawable(MainActivity.this,
                         R.drawable.ic_plus)
