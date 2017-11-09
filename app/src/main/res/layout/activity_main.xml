@@ -37,6 +37,19 @@
     <Button
         android:layout_width="88dp"
         android:layout_height="48dp"
+        android:text="fb"
+        android:id="@+id/fb"
+        tools:layout_editor_absoluteY="144dp"
+        tools:layout_editor_absoluteX="44dp"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/inst"
+        android:layout_toEndOf="@+id/inst"
+        android:layout_marginLeft="25dp"
+        android:layout_marginStart="25dp"/>
+
+    <Button
+        android:layout_width="88dp"
+        android:layout_height="48dp"
         android:text="test"
         android:id="@+id/test"
         tools:layout_editor_absoluteY="96dp"
