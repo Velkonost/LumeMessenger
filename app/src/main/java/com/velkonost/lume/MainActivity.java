@@ -12,6 +12,7 @@ import com.vk.sdk.VKCallback;
 import com.vk.sdk.VKScope;
 import com.vk.sdk.VKSdk;
 import com.vk.sdk.api.VKApi;
+import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKError;
 import com.vk.sdk.api.VKParameters;
 import com.vk.sdk.api.VKRequest;
@@ -26,6 +27,7 @@ import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIELDS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIRST_NAME;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ID;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.LAST_NAME;
+import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.PHOTO_50;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -98,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResult(VKAccessToken res) {
                 // Пользователь успешно авторизовался - VK
+                initializeAuthUserData(res.userId);
                 initializeUsersTable();
                 loadingView.animate().alpha(0.0f).setDuration(1500);
                 startActivity(new Intent(MainActivity.this, com.velkonost.lume.vkontakte.activities.MainActivity.class));
@@ -117,10 +120,13 @@ public class MainActivity extends AppCompatActivity {
      * Инициализация таблицы пользователей в локальной БД
      */
     private void initializeUsersTable() {
+
         /**
          * Получение информации о друзьях авторизованного пользователя
          */
-        final VKRequest requestFriends = VKApi.friends().get(VKParameters.from(FIELDS, FIRST_NAME + COMMA + LAST_NAME + COMMA + ID));
+        final VKRequest requestFriends = VKApi.friends().get(
+                VKParameters.from(FIELDS, FIRST_NAME + COMMA + LAST_NAME + COMMA + ID + COMMA + PHOTO_50)
+        );
 
         requestFriends.executeWithListener(new VKRequest.VKRequestListener() {
             @Override
@@ -133,7 +139,11 @@ public class MainActivity extends AppCompatActivity {
                         /**
                          * Добавление пользователя в локальную БД
                          */
-                        dbHelper.insertUsers(list.get(i).fields.getString(ID), list.get(i).toString());
+                        dbHelper.insertUsers(
+                                list.get(i).fields.getString(ID),
+                                list.get(i).toString(),
+                                list.get(i).fields.getString(PHOTO_50)
+                        );
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -154,6 +164,26 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onProgress(VKRequest.VKProgressType progressType, long bytesLoaded, long bytesTotal) {
                 super.onProgress(progressType, bytesLoaded, bytesTotal);
+            }
+        });
+    }
+
+    private void initializeAuthUserData(String userId) {
+        VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, userId, FIELDS, PHOTO_50));
+        request.executeSyncWithListener(new VKRequest.VKRequestListener() {
+            @Override
+            public void onComplete(VKResponse response) {
+                super.onComplete(response);
+
+                VKList list = (VKList) response.parsedModel;
+                String nickname = String.valueOf(list.get(0));
+                try {
+                    String photo50Url = String.valueOf(list.get(0).fields.get(PHOTO_50));
+                    dbHelper.insertUsers("0", nickname, photo50Url);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
             }
         });
     }

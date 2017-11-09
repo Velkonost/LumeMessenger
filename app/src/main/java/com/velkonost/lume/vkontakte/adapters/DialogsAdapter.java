@@ -7,12 +7,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
 import com.velkonost.lume.R;
 import com.velkonost.lume.vkontakte.activities.MessagesActivity;
 import com.velkonost.lume.vkontakte.db.DBHelper;
+import com.velkonost.lume.vkontakte.models.RoundImageView;
 import com.vk.sdk.api.VKApi;
 import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKParameters;
@@ -34,6 +37,7 @@ import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.AMOUNT_DIALOGS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.AMOUNT_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.COUNT;
+import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIELDS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ID;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.OFFSET;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_BODIES_LISTS;
@@ -44,10 +48,12 @@ import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_DATE
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_IDS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_IS_OUT;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_SENDERS;
+import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_SENDERS_IDS;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.BODY;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.CHAT_ID;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.ITEMS;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.MESSAGE;
+import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.PHOTO_50;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.RESPONSE;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.TITLE;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.USER_ID;
@@ -74,6 +80,8 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
      */
     private ArrayList<String> idsList;
 
+    private ArrayList<String> photosUrls;
+
     private DBHelper dbHelper;
 
     /**
@@ -82,12 +90,15 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
     private int alreadyShowedDialogsAmount;
 
     public DialogsAdapter(ArrayList<String> users, ArrayList<String> messages,
-                          Context ctx, ArrayList<String> idsList, DBHelper dbHelper) {
+                          Context ctx, ArrayList<String> idsList,
+                          ArrayList<String> photosUrls, DBHelper dbHelper) {
         this.users = users;
         this.messages = messages;
         this.ctx = ctx;
 
         this.idsList = idsList;
+        this.photosUrls = photosUrls;
+
         this.dbHelper = dbHelper;
 
         alreadyShowedDialogsAmount = 0;
@@ -135,13 +146,28 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
                                     jsonMessage = jsonMessage.getJSONObject(MESSAGE);
 
                                     String chatId;
+                                    boolean isChat;
                                     try {
                                         chatId = jsonMessage.getString(CHAT_ID);
+                                        isChat = true;
                                     } catch (JSONException e) {
                                         chatId = jsonMessage.getString(USER_ID);
+                                        isChat = false;
+                                    }
+
+                                    String dialogPhoto = " ";
+                                    try {
+                                        dialogPhoto = jsonMessage.getString(PHOTO_50);
+                                    } catch (JSONException e) {
+                                        if (!isChat) {
+                                            dialogPhoto = dbHelper.getFromUsersPhoto50UrlById(jsonMessage.getString(USER_ID));
+                                        } else {
+                                            dialogPhoto = "0";
+                                        }
                                     }
 
                                     idsList.add(chatId);
+                                    photosUrls.add(dialogPhoto);
 
                                     final String[] dialogTitle = {jsonMessage.getString(TITLE)};
 
@@ -180,6 +206,20 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
             holder.dialogName.setText(users.get(position));
             holder.lastMessage.setText(messages.get(position));
 
+            if (photosUrls.get(position).equals("0")) {
+                Picasso
+                        .with(ctx)
+                        .load(String.valueOf(ctx.getResources().getDrawable(R.drawable.ic_ab_app)))
+                        .transform(new RoundImageView())
+                        .into(holder.dialogPhoto);
+            } else {
+                Picasso
+                        .with(ctx)
+                        .load(photosUrls.get(position))
+                        .transform(new RoundImageView())
+                        .into(holder.dialogPhoto);
+            }
+
             /**
              * Открытие диалога - переход к последним сообщениям
              */
@@ -213,6 +253,8 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
          * Список отправителей сообщений
          */
         final ArrayList<String> messagesSenders = new ArrayList<>();
+
+        final ArrayList<String> messagesSendersIds = new ArrayList<>();
 
         /**
          * Список дат сообщений
@@ -341,7 +383,7 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
                         messagesIsOut.add(message.out);
                         messagesDates.add(getMessageDate(message.date));
                         messagesSenders.add(senderNickname[0]);
-
+                        messagesSendersIds.add(String.valueOf(message.user_id));
                     }
 
                     /**
@@ -354,6 +396,7 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
                             .putExtra(MESSAGES_IS_OUT, messagesIsOut)
                             .putExtra(MESSAGES_DATES, messagesDates)
                             .putExtra(MESSAGES_SENDERS, messagesSenders)
+                            .putExtra(MESSAGES_SENDERS_IDS, messagesSendersIds)
                             .putExtra(FWD_MESSAGES_BODIES_LISTS, fwdMessagesBodiesLists)
                             .putExtra(FWD_MESSAGES_DATES_LISTS, fwdMessagesDatesLists)
                             .putExtra(FWD_MESSAGES_SENDERS_LISTS, fwdMessagesSendersLists)
@@ -380,7 +423,7 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
             /**
              * Иначе через API VK
              */
-            VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, id));
+            VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, id, FIELDS, PHOTO_50));
             request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                 @Override
                 public void onComplete(VKResponse response) {
@@ -388,7 +431,13 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
 
                     VKList list = (VKList) response.parsedModel;
                     nickname[0] = String.valueOf(list.get(0));
-                    dbHelper.insertUsers(id, nickname[0]);
+                    try {
+                        String photo50Url = String.valueOf(list.get(0).fields.get(PHOTO_50));
+                        dbHelper.insertUsers(id, nickname[0], photo50Url);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
 
                 }
             });
@@ -416,7 +465,7 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
 
             final String[] fwdMessageUser = {dbHelper.getFromUsersNicknameById(String.valueOf(fwdMessage.user_id))};
             if (fwdMessageUser[0] == null) {
-                VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, fwdMessage.user_id));
+                VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, fwdMessage.user_id, FIELDS, PHOTO_50));
                 request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                     @Override
                     public void onComplete(VKResponse response) {
@@ -425,10 +474,15 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
                         VKList list = (VKList) response.parsedModel;
                         fwdMessageUser[0] = String.valueOf(list.get(0));
 
+                        try {
+                            String photo50Url = String.valueOf(list.get(0).fields.get(PHOTO_50));
+                            dbHelper.insertUsers(String.valueOf(fwdMessage.user_id), fwdMessageUser[0], photo50Url);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         /**
                          * Добавление пользователя в локальную БД
                          */
-                        dbHelper.insertUsers(String.valueOf(fwdMessage.user_id), fwdMessageUser[0]);
 
                     }
                 });
@@ -486,6 +540,14 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
         return idsList;
     }
 
+    public ArrayList<String> getPhotosUrls() {
+        return photosUrls;
+    }
+
+    public void setPhotosUrls(ArrayList<String> photosUrls) {
+        this.photosUrls = photosUrls;
+    }
+
     @Override
     public int getItemCount() {
         return users.size();
@@ -515,6 +577,8 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
 
         Button btnShowMore;
 
+        ImageView dialogPhoto;
+
         ViewHolder(final View itemView, boolean last) {
             super(itemView);
             if (last) {
@@ -524,6 +588,8 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
 
                 dialogName = (TextView) itemView.findViewById(R.id.txt_vp_item_list);
                 lastMessage = (TextView) itemView.findViewById(R.id.txt_vp_item_list2);
+
+                dialogPhoto = (ImageView) itemView.findViewById(R.id.dialog_icon);
             }
         }
     }

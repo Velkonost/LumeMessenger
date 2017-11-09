@@ -30,6 +30,7 @@ import java.util.ArrayList;
 
 import static com.velkonost.lume.Constants.DEBUG_TAG;
 import static com.velkonost.lume.vkontakte.Constants.API_METHODS.ADD_FRIEND;
+import static com.velkonost.lume.vkontakte.Constants.API_METHODS.DELETE_FRIEND;
 import static com.velkonost.lume.vkontakte.Constants.API_METHODS.SEARCH_USERS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIELDS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIRST_NAME;
@@ -56,6 +57,8 @@ public class SearchUsersAdapter extends RecyclerView.Adapter<SearchUsersAdapter.
 
     private String queryStr;
 
+    private ArrayList<String> friendsRequestsList;
+
     public SearchUsersAdapter(Context ctx, VKList listFriends) {
         this.ctx = ctx;
         this.listFriends = listFriends;
@@ -63,6 +66,7 @@ public class SearchUsersAdapter extends RecyclerView.Adapter<SearchUsersAdapter.
         usersNames = new ArrayList();
         usersIds = new ArrayList();
 
+        friendsRequestsList = new ArrayList<>();
     }
 
     @Override
@@ -91,24 +95,46 @@ public class SearchUsersAdapter extends RecyclerView.Adapter<SearchUsersAdapter.
                 }
             });
         } else {
+            final String userId = String.valueOf(usersIds.get(position - 1));
+
+            if (friendsRequestsList.contains(userId)) {
+                holder.sendFriendRequest.setImageDrawable(
+                        ctx.getResources().getDrawable(R.drawable.ic_check)
+                );
+            } else {
+                holder.sendFriendRequest.setImageDrawable(
+                        ctx.getResources().getDrawable(R.drawable.ic_account_plus_dark)
+                );
+            }
             ViewGroup.LayoutParams params = holder.searchUsersWrap.getLayoutParams();
             params.height = 0;
             holder.searchUsersWrap.setLayoutParams(params);
 
             holder.userName.setText(String.valueOf(usersNames.get(position - 1)));
-            holder.sendFriendRequest.setOnClickListener(new View.OnClickListener() {
+            holder.friendBlock.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
-                    VKRequest searchRequest = new VKRequest(ADD_FRIEND, VKParameters.from(USER_ID, usersIds.get(position - 1)));
-                    searchRequest.executeWithListener(new VKRequest.VKRequestListener() {
-                        @Override
-                        public void onComplete(VKResponse response) {
-                            holder.sendFriendRequest.setImageDrawable(ctx.getResources().getDrawable(R.drawable.ic_check));
-                            super.onComplete(response);
-
-                        }
-                    });
+                    if (!friendsRequestsList.contains(userId)) {
+                        VKRequest searchRequest = new VKRequest(ADD_FRIEND, VKParameters.from(USER_ID, userId));
+                        searchRequest.executeWithListener(new VKRequest.VKRequestListener() {
+                            @Override
+                            public void onComplete(VKResponse response) {
+                                holder.sendFriendRequest.setImageDrawable(ctx.getResources().getDrawable(R.drawable.ic_check));
+                                friendsRequestsList.add(userId);
+                                super.onComplete(response);
+                            }
+                        });
+                    } else {
+                        VKRequest searchRequest = new VKRequest(DELETE_FRIEND, VKParameters.from(USER_ID, userId));
+                        searchRequest.executeWithListener(new VKRequest.VKRequestListener() {
+                            @Override
+                            public void onComplete(VKResponse response) {
+                                holder.sendFriendRequest.setImageDrawable(ctx.getResources().getDrawable(R.drawable.ic_account_plus_dark));
+                                friendsRequestsList.remove(userId);
+                                super.onComplete(response);
+                            }
+                        });
+                    }
                 }
             });
 

@@ -33,6 +33,10 @@ public class MessagesList {
      */
     private ArrayList<String> isOut;
 
+    private ArrayList<String> photosUrls;
+
+    private ArrayList<String> sendersIds;
+
     /**
      * Список списков тел пересланных сообщений
      */
@@ -48,16 +52,24 @@ public class MessagesList {
      */
     ArrayList< ArrayList<String> > fwdMessagesDatesLists = new ArrayList<>();
 
-    public MessagesList(ArrayList<String> ids, ArrayList<String> bodies, ArrayList<String> dates,
-                        ArrayList<String> senders, ArrayList<String> isOut,
+
+
+    public MessagesList(ArrayList<String> ids,
+                        ArrayList<String> bodies,
+                        ArrayList<String> dates,
+                        ArrayList<String> senders,
+                        ArrayList<String> sendersIds,
+                        ArrayList<String> isOut,
                         ArrayList< ArrayList<String> > fwdMessagesBodiesLists,
                         ArrayList< ArrayList<String> > fwdMessagesDatesLists,
-                        ArrayList< ArrayList<String> > fwdMessagesSendersLists) {
+                        ArrayList< ArrayList<String> > fwdMessagesSendersLists
+    ) {
 
         this.ids = ids;
         this.bodies = bodies;
         this.dates = dates;
         this.senders = senders;
+        this.sendersIds = sendersIds;
         this.isOut = isOut;
 
         this.fwdMessagesBodiesLists = fwdMessagesBodiesLists;
@@ -71,13 +83,17 @@ public class MessagesList {
         this.senders = senders;
     }
 
-    public void addMessage(String id, String body, String date, String sender, String isOut,
-                            ArrayList<String> fwdMessagesBodies, ArrayList<String> fwdMessagesSenders,
-                            ArrayList<String> fwdMessagesDates) {
+    public void addMessage(String id, String body, String date,
+                           String sender, String senderId, String isOut,
+                            ArrayList<String> fwdMessagesBodies,
+                           ArrayList<String> fwdMessagesSenders,
+                            ArrayList<String> fwdMessagesDates
+    ) {
         this.ids.add(id);
         this.bodies.add(body);
         this.dates.add(date);
         this.senders.add(sender);
+        this.sendersIds.add(senderId);
         this.isOut.add(isOut);
 
         this.fwdMessagesBodiesLists.add(fwdMessagesBodies);
@@ -87,6 +103,30 @@ public class MessagesList {
 
     public int getMessagesAmount() {
         return bodies.size();
+    }
+
+    public ArrayList<String> getPhotosUrls() {
+        return photosUrls;
+    }
+
+    public void setPhotosUrls(ArrayList<String> photosUrls) {
+        this.photosUrls = photosUrls;
+    }
+
+    public ArrayList<String> getSendersIds() {
+        return sendersIds;
+    }
+
+    public void setSendersIds(ArrayList<String> sendersIds) {
+        this.sendersIds = sendersIds;
+    }
+
+    public String getSenderIdsByPosition(int position) {
+        return sendersIds.get(position);
+    }
+
+    public String getPhotoUrlByPosition(int position) {
+        return photosUrls.get(position);
     }
 
     public String getMessageBodyByPosition(int position) {

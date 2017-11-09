@@ -19,6 +19,7 @@ public class Constants {
         public static final String GET_PROFILE_INFO = "account.getProfileInfo";
         public static final String GET_MESSAGES = "messages.getHistory";
         public static final String SEND_MESSAGE = "messages.send";
+        public static final String CREATE_CHAT = "messages.createChat";
         public static final String GET_LONG_POLL_SERVER = "messages.getLongPollServer";
         public static final String GET_LONG_POLL_MESSAGES_HISTORY = "messages.getLongPollHistory";
         public static final String SEARCH_USERS = "users.search";
@@ -64,6 +65,7 @@ public class Constants {
         public static final String MESSAGES = "messages";
         public static final String CHAT_ID = "chat_id";
         public static final String USER_ID = "user_id";
+        public static final String USER_IDS = "user_ids";
         public static final String PHOTO_50 = "photo_50";
         public static final String TITLE = "title";
         public static final String BODY = "body";
@@ -73,6 +75,7 @@ public class Constants {
         public static final String MESSAGES_IDS = "messagesIds";
         public static final String MESSAGES_BODIES = "messagesBodies";
         public static final String MESSAGES_SENDERS = "messagesSenders";
+        public static final String MESSAGES_SENDERS_IDS = "messagesSendersIds";
         public static final String MESSAGES_IS_OUT = "messagesIsOut";
         public static final String MESSAGES_DATES = "messagesDates";
 
