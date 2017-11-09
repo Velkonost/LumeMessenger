@@ -3,6 +3,7 @@ package com.velkonost.lume.vkontakte.adapters;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -206,6 +207,7 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
             holder.dialogName.setText(users.get(position));
             holder.lastMessage.setText(messages.get(position));
 
+            Log.i(String.valueOf(position), photosUrls.toString());
             if (photosUrls.get(position).equals("0")) {
                 Picasso
                         .with(ctx)

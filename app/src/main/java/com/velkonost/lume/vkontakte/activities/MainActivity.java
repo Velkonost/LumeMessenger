@@ -483,21 +483,53 @@ public class MainActivity extends AppCompatActivity {
                 isChat = false;
             }
 
-            String dialogPhoto = " ";
+            String dialogPhoto;
             try {
                 dialogPhoto = jsonMessage.getString(PHOTO_50);
             } catch (JSONException e) {
                 if (!isChat) {
                     dialogPhoto = dbHelper.getFromUsersPhoto50UrlById(jsonMessage.getString(USER_ID));
+                    if (dialogPhoto.equals("-1")) {
+
+                        final VKRequest request = VKApi.users().get(VKParameters.from(
+                                VKApiConst.USER_ID, jsonMessage.getString(USER_ID),
+                                FIELDS, PHOTO_50)
+                        );
+                        final JSONObject finalJsonMessage = jsonMessage;
+
+                        request.executeWithListener(new VKRequest.VKRequestListener() {
+                            @Override
+                            public void onError(VKError error) {
+                                super.onError(error);
+                            }
+
+                            @Override
+                            public void onComplete(VKResponse response) {
+                                super.onComplete(response);
+
+                                VKList list = (VKList) response.parsedModel;
+                                String nickname = String.valueOf(list.get(0));
+
+                                try {
+                                    String photo50Url = list.get(0).fields.getString(PHOTO_50);
+
+                                    dbHelper.insertUsers(finalJsonMessage.getString(USER_ID), nickname, photo50Url);
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+
+                            }
+                        });
+                        dialogPhoto = dbHelper.getFromUsersPhoto50UrlById(jsonMessage.getString(USER_ID));
+                    }
                 } else {
                     dialogPhoto = "0";
                 }
             }
 
-
             idsList.add(chatId);
             photosUrls.add(dialogPhoto);
-            }
+        }
 
         VKList<VKApiDialog> list = getMessagesResponse.items;
         completeRequestMessages(list, users, messages);
@@ -536,8 +568,8 @@ public class MainActivity extends AppCompatActivity {
 
         models.add(
                 new NavigationTabBar.Model.Builder(
-                        getResources().getDrawable(R.drawable.ic_first),
-                        Color.parseColor(colors[0]))
+                        getResources().getDrawable(R.drawable.ic_wechat),
+                        ContextCompat.getColor(this, R.color.colorLightBlue))
                         .title(DIALOGS_PAGE)
                         .build()
         );

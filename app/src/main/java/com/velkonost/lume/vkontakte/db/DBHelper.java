@@ -279,7 +279,7 @@ public class DBHelper extends SQLiteOpenHelper{
             int photo50UrlIndex = c.getColumnIndex("photo_50_url");
             return c.getString(photo50UrlIndex);
         }
-        return null;
+        return "-1";
     }
 
     /**
