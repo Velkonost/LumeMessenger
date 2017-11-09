@@ -486,6 +486,7 @@ public class MessagesActivity extends AppCompatActivity {
                         messagesIsOut.add(0, String.valueOf(message.out));
                         messagesDates.add(0, getMessageDate(message.date));
                         messagesSenders.add(0, senderNickname);
+                        messagesSendersIds.add(0, String.valueOf(message.user_id));
                     }
                 }
 
@@ -522,6 +523,7 @@ public class MessagesActivity extends AppCompatActivity {
         messagesList.setIsOut(messagesIsOut);
         messagesList.setDates(messagesDates);
         messagesList.setSenders(messagesSenders);
+        messagesList.setSendersIds(messagesSendersIds);
 
         messagesList.setFwdMessagesBodiesLists(fwdMessagesBodiesLists);
         messagesList.setFwdMessagesDatesLists(fwdMessagesDatesLists);

@@ -227,7 +227,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 }
             });
         } else {
-
             holder.messageWrap.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
@@ -240,7 +239,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 @Override
                 public void onClick(View v) {
                     mMessagesActivity.removeFwdMessageToSend(messagesList.getMessageIdsByPosition(position));
-
                 }
             });
 
@@ -251,14 +249,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             if (messagesList.getMessageIsOutByPosition(position).equals("true")) {
                 holder.messageSentIcon.setVisibility(View.VISIBLE);
                 holder.messageReceivedIcon.setVisibility(View.INVISIBLE);
-
-//                Picasso
-//                        .with(ctx)
-//                        .load(dbHelper.getFromUsersPhoto50UrlById("0"))
-//                        .transform(new RoundImageView())
-//                        .into(holder.userPhotoSent);
-
-//                holder.userPhotoSent.setVisibility(View.VISIBLE);
                 holder.userPhotoReceived.setVisibility(View.INVISIBLE);
 
                 params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
@@ -273,16 +263,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         .transform(new RoundImageView())
                         .into(holder.userPhotoReceived);
 
-//                holder.userPhotoSent.setVisibility(View.INVISIBLE);
                 holder.userPhotoReceived.setVisibility(View.VISIBLE);
-
-//                params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
             }
 
             holder.messageWrap.setLayoutParams(params);
-
             holder.messageBody.setText(messagesList.getMessageBodyByPosition(position));
-            holder.messageDate.setText(messagesList.getMessageDateByPosition(position));
+            holder.messageDate.setText(formatDate(messagesList.getMessageDateByPosition(position)));
 
             holder.rvFwdMessages.setHasFixedSize(true);
             holder.rvFwdMessages.setLayoutManager(
@@ -296,9 +282,18 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     messagesList.getFwdMessagesDatesByPosition(position),
                     messagesList.getFwdMessagesSendersByPosition(position)
             );
-
             holder.rvFwdMessages.setAdapter(new FwdMessagesAdapter(fwdMessagesList, ctx));
         }
+    }
+
+    private String formatDate(String date) {
+        String year = date.substring(0, 4);
+        String month = date.substring(5, 7);
+        String day = date.substring(8, 10);
+
+        String hour = date.substring(11, 13);
+        String minute = date.substring(14, 16);
+        return hour + ":" + minute;
     }
 
     @Override
@@ -306,12 +301,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         return messagesList.getMessagesAmount();
     }
 
-
     @Override
     public int getItemViewType(int position) {
         return (position == messagesList.getMessagesAmount() - 1) ? 0 : 1;
     }
-
 
     /**
      * Получения данных о пересланных сообщениях

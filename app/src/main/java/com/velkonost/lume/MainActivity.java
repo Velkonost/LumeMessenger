@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setTypeface();
 
         dbHelper = new DBHelper(this);
 
@@ -83,6 +84,13 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(instAct);
             }
         });
+    }
+
+    private void setTypeface() {
+        FontsOverride.setDefaultFont(this, "DEFAULT");
+        FontsOverride.setDefaultFont(this, "MONOSPACE");
+        FontsOverride.setDefaultFont(this, "SERIF");
+        FontsOverride.setDefaultFont(this, "SANS_SERIF");
     }
 
     @Override

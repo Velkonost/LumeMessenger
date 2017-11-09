@@ -39,10 +39,18 @@ class FwdMessagesAdapter extends RecyclerView.Adapter<FwdMessagesAdapter.ViewHol
     public void onBindViewHolder(final ViewHolder holder, final int position) {
         holder.userName.setText(messagesList.getMessageSendersByPosition(position));
         holder.messageBody.setText(messagesList.getMessageBodyByPosition(position));
-        holder.messageDate.setText(messagesList.getMessageDateByPosition(position));
+        holder.messageDate.setText(formatDate(messagesList.getMessageDateByPosition(position)));
     }
 
+    private String formatDate(String date) {
+        String year = date.substring(0, 4);
+        String month = date.substring(5, 7);
+        String day = date.substring(8, 10);
 
+        String hour = date.substring(11, 13);
+        String minute = date.substring(14, 16);
+        return hour + ":" + minute;
+    }
 
     @Override
     public int getItemCount() {

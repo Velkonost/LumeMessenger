@@ -19,6 +19,7 @@
                 android:id="@+id/search_users"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:typeface="monospace"
                 android:layout_weight="2"/>
             <Button
                 android:id="@+id/go_search_users"
@@ -48,8 +49,8 @@
                 android:layout_marginBottom="5dp"
                 android:layout_toEndOf="@id/user_photo"
                 android:gravity="center"
-                android:textColor="#9b92b3"
-                android:textStyle="bold"/>
+                android:typeface="monospace"
+                android:textColor="#9b92b3"/>
             <ImageView
                 android:layout_width="30dp"
                 android:layout_height="30dp"

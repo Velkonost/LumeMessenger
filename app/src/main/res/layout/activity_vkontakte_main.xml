@@ -29,6 +29,7 @@
         app:ntb_badge_position="left"
         app:ntb_badge_title_color="#ffffffff"
         app:ntb_badge_use_typeface="true"
+        app:ntb_typeface="monospace"
         app:ntb_badged="true"
         android:alpha="0.0"
         android:layout_alignParentBottom="true"

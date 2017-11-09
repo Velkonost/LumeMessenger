@@ -70,27 +70,30 @@
         <TextView
             android:id="@+id/message_body"
             android:layout_width="wrap_content"
-            android:maxWidth="400dp"
             android:layout_height="wrap_content"
+            android:typeface="monospace"
+            android:textColor="@color/vk_black"
+            android:maxWidth="400dp"
             android:paddingLeft="10dp"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp"
+            android:paddingTop="5dp"
             android:layout_marginLeft="60dp"
-            android:paddingRight="50dp"
-           />
+            android:paddingRight="50dp"/>
         <TextView
             android:id="@+id/message_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="12sp"
+            android:typeface="monospace"
             android:layout_gravity="end"
-            android:gravity="right"
-            />
+            android:layout_marginRight="5dp"
+            android:gravity="right"/>
         <android.support.v7.widget.RecyclerView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="5dp"
-            android:layout_marginLeft="60dp"
+            android:layout_marginRight="5dp"
+            android:layout_marginBottom="5dp"
+            android:layout_marginLeft="65dp"
+            android:background="@drawable/bg_round_rect"
             android:id="@+id/fwd_messages_rv"/>
     </LinearLayout>
     <View
