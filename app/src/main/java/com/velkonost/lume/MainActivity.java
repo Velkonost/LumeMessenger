@@ -96,10 +96,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setTypeface() {
-        FontsOverride.setDefaultFont(this, "DEFAULT");
-        FontsOverride.setDefaultFont(this, "MONOSPACE");
-        FontsOverride.setDefaultFont(this, "SERIF");
-        FontsOverride.setDefaultFont(this, "SANS_SERIF");
+        FontsOverride.setDefaultFont(this, "DEFAULT", "normal");
+        FontsOverride.setDefaultFont(this, "MONOSPACE", "normal");
+        FontsOverride.setDefaultFont(this, "SERIF", "bold");
+        FontsOverride.setDefaultFont(this, "SANS_SERIF", "normal");
     }
 
     @Override

@@ -26,7 +26,7 @@
         android:layout_marginBottom="5dp"
         android:layout_toEndOf="@id/user_photo"
         android:gravity="center"
-        android:textColor="#9b92b3"
+        android:textColor="@color/colorTextBlack"
         android:typeface="monospace"/>
     </RelativeLayout>
 

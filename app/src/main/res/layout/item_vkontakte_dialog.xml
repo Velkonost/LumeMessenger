@@ -29,8 +29,8 @@
             android:gravity="center"
             android:lines="1"
             android:maxLines="1"
-            android:textColor="#9b92b3"
-            android:typeface="monospace"
+            android:textColor="@color/colorTextBlack"
+            android:typeface="serif"
             android:textStyle="bold"/>
         <TextView
             android:id="@+id/txt_vp_item_list2"
@@ -41,7 +41,7 @@
             android:lines="1"
             android:typeface="monospace"
             android:maxLines="1"
-            android:textColor="#9b92b3"
+            android:textColor="@color/colorTextBlack"
             android:textStyle="bold"/>
         </LinearLayout>
     </RelativeLayout>

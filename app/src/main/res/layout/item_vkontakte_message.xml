@@ -72,7 +72,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:typeface="monospace"
-            android:textColor="@color/vk_black"
+            android:textColor="@color/colorTextBlack"
             android:maxWidth="400dp"
             android:paddingLeft="10dp"
             android:paddingTop="5dp"
@@ -84,6 +84,7 @@
             android:layout_height="wrap_content"
             android:textSize="12sp"
             android:typeface="monospace"
+            android:textColor="@color/colorTextBlack"
             android:layout_gravity="end"
             android:layout_marginRight="5dp"
             android:gravity="right"/>

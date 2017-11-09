@@ -11,13 +11,24 @@ import java.util.Locale;
  */
 
 public class FontsOverride {
-    public static void setDefaultFont(Context context,
-                                      String staticTypefaceFieldName) {
-        final Typeface regular =  Typeface.createFromAsset(
-                context.getAssets(),
-                String.format(Locale.US, "fonts/%s", "OpenSans-Light.ttf"));
+    public static void setDefaultFont(
+            Context context,
+            String staticTypefaceFieldName,
+            String param
+    ) {
+        if (param.equals("normal")) {
+            final Typeface regular = Typeface.createFromAsset(
+                    context.getAssets(),
+                    String.format(Locale.US, "fonts/%s", "OpenSans-Light.ttf"));
 
-        replaceFont(staticTypefaceFieldName, regular);
+            replaceFont(staticTypefaceFieldName, regular);
+        } else if (param.equals("bold")) {
+            final Typeface regular = Typeface.createFromAsset(
+                    context.getAssets(),
+                    String.format(Locale.US, "fonts/%s", "OpenSans-Bold.ttf"));
+
+            replaceFont(staticTypefaceFieldName, regular);
+        }
     }
 
     protected static void replaceFont(String staticTypefaceFieldName,

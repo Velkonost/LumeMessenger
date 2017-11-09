@@ -21,6 +21,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/editNewMessage"
         android:typeface="monospace"
+        android:textColor="@color/colorTextBlack"
         android:layout_weight="1"/>
     <Button
         android:layout_width="match_parent"
@@ -32,5 +33,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:typeface="monospace"
+        android:textColor="@color/colorTextBlack"
         android:id="@+id/fwd_messages"/>
 </LinearLayout>
