@@ -50,7 +50,7 @@
                 android:layout_toEndOf="@id/user_photo"
                 android:gravity="center"
                 android:typeface="monospace"
-                android:textColor="#9b92b3"/>
+                android:textColor="@color/colorBlack"/>
             <ImageView
                 android:layout_width="30dp"
                 android:layout_height="30dp"

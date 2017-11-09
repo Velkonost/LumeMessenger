@@ -102,9 +102,6 @@ public class FriendsAdapter extends BaseAdapter {
                      super.onComplete(response);
                  }
              });
-
-             listFriends.remove(position);
-             notifyDataSetChanged();
          } catch (JSONException e) {
              e.printStackTrace();
          }

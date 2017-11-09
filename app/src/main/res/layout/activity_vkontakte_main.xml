@@ -5,8 +5,8 @@
     android:id="@+id/parent"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#423752"
     android:fitsSystemWindows="true"
+    android:background="@color/colorLightGrey"
     android:orientation="vertical">
 
     <android.support.v4.view.ViewPager
@@ -29,6 +29,8 @@
         app:ntb_badge_position="left"
         app:ntb_badge_title_color="#ffffffff"
         app:ntb_badge_use_typeface="true"
+        app:ntb_bg_color="@color/colorLightGreen"
+        app:ntb_inactive_color="@color/colorGrey"
         app:ntb_typeface="monospace"
         app:ntb_badged="true"
         android:alpha="0.0"
@@ -54,6 +56,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:animateLayoutChanges="true"
+        android:background="#423752"
         android:id="@+id/loading_view">
         <ImageView
             android:id="@+id/loading_icon"
@@ -70,8 +73,7 @@
             android:layout_below="@id/loading_icon"
             android:gravity="center"
             android:textColor="@color/vk_white"
-            android:text="123"
-            />
+            android:text="123"/>
 
     </RelativeLayout>
 

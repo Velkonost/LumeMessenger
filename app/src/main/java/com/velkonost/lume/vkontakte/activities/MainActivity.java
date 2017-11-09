@@ -2,7 +2,6 @@ package com.velkonost.lume.vkontakte.activities;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -78,6 +77,7 @@ import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_DATE
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_IDS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_IS_OUT;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_SENDERS;
+import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_SENDERS_IDS;
 import static com.velkonost.lume.vkontakte.Constants.REFRESH_MESSAGES_PERIOD;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.BODY;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.CHAT_ID;
@@ -568,22 +568,22 @@ public class MainActivity extends AppCompatActivity {
 
         models.add(
                 new NavigationTabBar.Model.Builder(
-                        getResources().getDrawable(R.drawable.ic_wechat),
+                        getResources().getDrawable(R.drawable.ic_message_text),
                         ContextCompat.getColor(this, R.color.colorLightBlue))
                         .title(DIALOGS_PAGE)
                         .build()
         );
         models.add(
                 new NavigationTabBar.Model.Builder(
-                        getResources().getDrawable(R.drawable.ic_second),
-                        Color.parseColor(colors[1]))
+                        getResources().getDrawable(R.drawable.ic_account_multiple),
+                        ContextCompat.getColor(this, R.color.colorLightBlue))
                         .title(FRIENDS_PAGE)
                         .build()
         );
         models.add(
                 new NavigationTabBar.Model.Builder(
-                        getResources().getDrawable(R.drawable.ic_third),
-                        Color.parseColor(colors[2]))
+                        getResources().getDrawable(R.drawable.ic_settings),
+                        ContextCompat.getColor(this, R.color.colorLightBlue))
                         .title(SETTINGS_PAGE)
                         .build()
         );
@@ -858,6 +858,8 @@ public class MainActivity extends AppCompatActivity {
          */
         final ArrayList<String> messagesSenders = new ArrayList<>();
 
+        final ArrayList<String> messagesSendersIds = new ArrayList<>();
+
         /**
          * Список дат сообщений
          */
@@ -984,6 +986,7 @@ public class MainActivity extends AppCompatActivity {
                         messagesIsOut.add(message.out);
                         messagesDates.add(getMessageDate(message.date));
                         messagesSenders.add(senderNickname[0]);
+                        messagesSendersIds.add(String.valueOf(message.user_id));
 
                     }
 
@@ -997,6 +1000,7 @@ public class MainActivity extends AppCompatActivity {
                             .putExtra(MESSAGES_IS_OUT, messagesIsOut)
                             .putExtra(MESSAGES_DATES, messagesDates)
                             .putExtra(MESSAGES_SENDERS, messagesSenders)
+                            .putExtra(MESSAGES_SENDERS_IDS, messagesSendersIds)
                             .putExtra(FWD_MESSAGES_BODIES_LISTS, fwdMessagesBodiesLists)
                             .putExtra(FWD_MESSAGES_DATES_LISTS, fwdMessagesDatesLists)
                             .putExtra(FWD_MESSAGES_SENDERS_LISTS, fwdMessagesSendersLists)
@@ -1169,12 +1173,13 @@ public class MainActivity extends AppCompatActivity {
                 SwipeMenuItem openDialogItem = new SwipeMenuItem(
                         getApplicationContext());
                 // set item background
-                openDialogItem.setBackground(new ColorDrawable(Color.rgb(0xC9, 0xC9,
-                        0xCE)));
+                openDialogItem.setBackground(R.color.colorLightGrey);
                 // set item width
                 openDialogItem.setWidth(dp2px(72));
                 // set item title
-                openDialogItem.setTitle("Open");
+                openDialogItem.setIcon(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_lead_pencil));
+
+//                openDialogItem.setTitle("Open");
                 // set item title fontsize
                 openDialogItem.setTitleSize(12);
                 // set item title font color
@@ -1186,12 +1191,11 @@ public class MainActivity extends AppCompatActivity {
                 SwipeMenuItem removeFriendItem = new SwipeMenuItem(
                         getApplicationContext());
                 // set item background
-                removeFriendItem.setBackground(new ColorDrawable(Color.rgb(0xC9, 0xC9,
-                        0xCE)));
+                removeFriendItem.setBackground(R.color.colorLightGrey);
                 // set item width
                 removeFriendItem.setWidth(dp2px(72));
                 // set item title
-                removeFriendItem.setTitle("Delete");
+                removeFriendItem.setIcon(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_close));
                 // set item title fontsize
                 removeFriendItem.setTitleSize(12);
                 // set item title font color
