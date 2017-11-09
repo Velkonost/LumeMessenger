@@ -28,6 +28,7 @@
         <activity android:name=".instagram.activities.MainActivity"/>
         <activity android:name=".instagram.activities.InstagramActivity"/>
 
+        <activity android:name=".facebook.activities.MainActivity"/>
         <meta-data
             android:name="com.instagram.instagramapi.InstagramAppClientId"
             android:value="5e674531494d40e096c2e86722d91baa" />

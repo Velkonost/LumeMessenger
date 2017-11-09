@@ -74,6 +74,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        ((Button) findViewById(R.id.fb)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent fbAct = new Intent(MainActivity.this, com.velkonost.lume.facebook.activities.MainActivity.class);
+                startActivity(fbAct);
+            }
+        });
+
         ((Button) findViewById(R.id.inst)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -81,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(instAct);
             }
         });
+
     }
 
     @Override

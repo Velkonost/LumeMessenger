@@ -38,9 +38,10 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
 
     compile 'com.vk:androidsdk:+' //SDK Vkontakte
-    compile 'devlight.io:navigationtabbar:1.2.5' //NavigationTabBar - bottom navigation: https://github.com/Devlight/NavigationTabBar
     compile 'com.github.sayyam:instagramapi:0.1.0' //SDK Instagram
+    compile 'com.facebook.android:facebook-login:[4,5)'//SDK FaceBook
 
+    compile 'devlight.io:navigationtabbar:1.2.5' //NavigationTabBar - bottom navigation: https://github.com/Devlight/NavigationTabBar
     compile 'com.squareup.picasso:picasso:2.5.2' //Picasso - Upload Imgs
     compile 'de.hdodenhof:circleimageview:2.2.0' // Circle ImageView
     compile 'com.yqritc:recyclerview-multiple-viewtypes-adapter:1.1.0' //Watch photos Instagram
