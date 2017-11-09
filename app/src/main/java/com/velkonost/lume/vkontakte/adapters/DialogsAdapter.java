@@ -7,12 +7,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
 import com.velkonost.lume.R;
 import com.velkonost.lume.vkontakte.activities.MessagesActivity;
 import com.velkonost.lume.vkontakte.db.DBHelper;
+import com.velkonost.lume.vkontakte.models.RoundImageView;
 import com.vk.sdk.api.VKApi;
 import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKParameters;
@@ -77,6 +80,8 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
      */
     private ArrayList<String> idsList;
 
+    private ArrayList<String> photosUrls;
+
     private DBHelper dbHelper;
 
     /**
@@ -85,12 +90,15 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
     private int alreadyShowedDialogsAmount;
 
     public DialogsAdapter(ArrayList<String> users, ArrayList<String> messages,
-                          Context ctx, ArrayList<String> idsList, DBHelper dbHelper) {
+                          Context ctx, ArrayList<String> idsList,
+                          ArrayList<String> photosUrls, DBHelper dbHelper) {
         this.users = users;
         this.messages = messages;
         this.ctx = ctx;
 
         this.idsList = idsList;
+        this.photosUrls = photosUrls;
+
         this.dbHelper = dbHelper;
 
         alreadyShowedDialogsAmount = 0;
@@ -138,13 +146,28 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
                                     jsonMessage = jsonMessage.getJSONObject(MESSAGE);
 
                                     String chatId;
+                                    boolean isChat;
                                     try {
                                         chatId = jsonMessage.getString(CHAT_ID);
+                                        isChat = true;
                                     } catch (JSONException e) {
                                         chatId = jsonMessage.getString(USER_ID);
+                                        isChat = false;
+                                    }
+
+                                    String dialogPhoto = " ";
+                                    try {
+                                        dialogPhoto = jsonMessage.getString(PHOTO_50);
+                                    } catch (JSONException e) {
+                                        if (!isChat) {
+                                            dialogPhoto = dbHelper.getFromUsersPhoto50UrlById(jsonMessage.getString(USER_ID));
+                                        } else {
+                                            dialogPhoto = "0";
+                                        }
                                     }
 
                                     idsList.add(chatId);
+                                    photosUrls.add(dialogPhoto);
 
                                     final String[] dialogTitle = {jsonMessage.getString(TITLE)};
 
@@ -182,6 +205,20 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
         } else {
             holder.dialogName.setText(users.get(position));
             holder.lastMessage.setText(messages.get(position));
+
+            if (photosUrls.get(position).equals("0")) {
+                Picasso
+                        .with(ctx)
+                        .load(String.valueOf(ctx.getResources().getDrawable(R.drawable.ic_ab_app)))
+                        .transform(new RoundImageView())
+                        .into(holder.dialogPhoto);
+            } else {
+                Picasso
+                        .with(ctx)
+                        .load(photosUrls.get(position))
+                        .transform(new RoundImageView())
+                        .into(holder.dialogPhoto);
+            }
 
             /**
              * Открытие диалога - переход к последним сообщениям
@@ -503,6 +540,14 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
         return idsList;
     }
 
+    public ArrayList<String> getPhotosUrls() {
+        return photosUrls;
+    }
+
+    public void setPhotosUrls(ArrayList<String> photosUrls) {
+        this.photosUrls = photosUrls;
+    }
+
     @Override
     public int getItemCount() {
         return users.size();
@@ -532,6 +577,8 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
 
         Button btnShowMore;
 
+        ImageView dialogPhoto;
+
         ViewHolder(final View itemView, boolean last) {
             super(itemView);
             if (last) {
@@ -541,6 +588,8 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
 
                 dialogName = (TextView) itemView.findViewById(R.id.txt_vp_item_list);
                 lastMessage = (TextView) itemView.findViewById(R.id.txt_vp_item_list2);
+
+                dialogPhoto = (ImageView) itemView.findViewById(R.id.dialog_icon);
             }
         }
     }

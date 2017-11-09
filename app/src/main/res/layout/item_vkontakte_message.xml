@@ -19,9 +19,9 @@
         android:layout_width="50dp"
         android:layout_height="0dp"
         android:id="@+id/message_received_icon"
-        android:src="@drawable/message_received"
+        android:src="@drawable/message_received_2"
         android:scaleType="fitXY"
-        android:layout_marginLeft="50dp"
+        android:layout_marginLeft="40dp"
         android:layout_alignTop="@+id/message_background"
         android:layout_alignBottom="@+id/message_background"/>
     <ImageView
@@ -31,7 +31,6 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginLeft="60dp"
-
         android:layout_alignTop="@id/message_wrap"
         android:layout_alignBottom="@id/message_wrap"
         android:layout_alignLeft="@id/message_wrap"
@@ -40,10 +39,9 @@
         android:layout_width="50dp"
         android:layout_height="0dp"
         android:id="@+id/message_sent_icon"
-        android:src="@drawable/message_sent"
+        android:src="@drawable/message_sent_2"
         android:scaleType="fitXY"
-        android:layout_marginRight="-10dp"
-        android:layout_alignLeft="@id/user_photo_sent"
+        android:layout_marginRight="-20dp"
         android:layout_alignRight="@id/message_background"
         android:layout_alignTop="@id/message_background"
         android:layout_alignBottom="@id/message_background"/>
@@ -91,11 +89,13 @@
         <android.support.v7.widget.RecyclerView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:layout_marginLeft="60dp"
             android:id="@+id/fwd_messages_rv"/>
     </LinearLayout>
     <View
         android:layout_width="match_parent"
-        android:layout_height="1dp"
+        android:layout_height="2dp"
         android:layout_below="@id/message_wrap"/>
 
 </RelativeLayout>
