@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:gravity="center"
     android:layout_height="wrap_content"
-    android:background="@color/colorLightGrey"
+    android:background="@android:color/transparent"
     android:id="@+id/show_more"
     android:text="show more"/>
 </LinearLayout>

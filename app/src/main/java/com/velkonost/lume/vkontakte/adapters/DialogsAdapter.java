@@ -194,7 +194,7 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
             if (photosUrls.get(position).equals("0")) {
                 Picasso
                         .with(ctx)
-                        .load(String.valueOf(ctx.getResources().getDrawable(R.drawable.ic_ab_app)))
+                        .load(R.drawable.vk_dark)
                         .transform(new RoundImageView())
                         .into(holder.dialogPhoto);
             } else {
