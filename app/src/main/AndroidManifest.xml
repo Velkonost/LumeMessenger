@@ -29,12 +29,33 @@
         <activity android:name=".instagram.activities.InstagramActivity"/>
 
         <activity android:name=".facebook.activities.MainActivity"/>
+        <activity android:name=".facebook.activities.MessagesActivity"/>
+
         <meta-data
             android:name="com.instagram.instagramapi.InstagramAppClientId"
             android:value="5e674531494d40e096c2e86722d91baa" />
         <meta-data
             android:name="com.instagram.instagramapi.InstagramAppRedirectURL"
             android:value="http://velkonost.ru/auth/" />
+
+        <meta-data android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id"/>
+
+        <activity android:name="com.facebook.FacebookActivity"
+            android:configChanges=
+                "keyboard|keyboardHidden|screenLayout|screenSize|orientation"
+            android:label="@string/app_name2" />
+        <activity
+            android:name="com.facebook.CustomTabActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="@string/fb_login_protocol_scheme" />
+            </intent-filter>
+        </activity>
+
 
     </application>
 
