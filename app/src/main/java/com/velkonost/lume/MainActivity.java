@@ -12,7 +12,6 @@ import com.vk.sdk.VKCallback;
 import com.vk.sdk.VKScope;
 import com.vk.sdk.VKSdk;
 import com.vk.sdk.api.VKApi;
-import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKError;
 import com.vk.sdk.api.VKParameters;
 import com.vk.sdk.api.VKRequest;
@@ -28,6 +27,7 @@ import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIRST_NAME;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ID;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.LAST_NAME;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.PHOTO_50;
+import static com.velkonost.lume.vkontakte.VkApiHelper.getAuthUserData;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -156,7 +156,6 @@ public class MainActivity extends AppCompatActivity {
                         e.printStackTrace();
                     }
                 }
-//                initializeMessagesTable();
             }
 
             @Override
@@ -177,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initializeAuthUserData(String userId) {
-        VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, userId, FIELDS, PHOTO_50));
+        VKRequest request = getAuthUserData(userId);
         request.executeSyncWithListener(new VKRequest.VKRequestListener() {
             @Override
             public void onComplete(VKResponse response) {

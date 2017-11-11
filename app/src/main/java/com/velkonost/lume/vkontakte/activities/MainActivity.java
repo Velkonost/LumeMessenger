@@ -99,6 +99,9 @@ public class MainActivity extends AppCompatActivity {
 
     private ViewPager viewPager;
 
+    /**
+     * Нижняя панель навигации
+     */
     private NavigationTabBar navigationTabBar;
 
     /**
@@ -173,9 +176,9 @@ public class MainActivity extends AppCompatActivity {
 
         viewPager = (ViewPager) findViewById(R.id.vp_horizontal_ntb);
         mainFab = (FloatingActionButton) findViewById(fab);
-        dbHelper = new DBHelper(this);
-
         loadingView = (RelativeLayout) findViewById(R.id.loading_view);
+
+        dbHelper = new DBHelper(this);
 
         /* Установка слушателя на основную кнопку */
         initializeFabListener();
@@ -254,9 +257,8 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<String> idsList = mDialogsAdapter.getIdsList();
         ArrayList<String> photosUrlsList = mDialogsAdapter.getPhotosUrls();
 
-        JSONObject jsonResponse = null;
         try {
-            jsonResponse = (JSONObject) response.json.get(RESPONSE);
+            JSONObject jsonResponse = (JSONObject) response.json.get(RESPONSE);
             JSONArray messagesJSONArray = jsonResponse.getJSONArray(ITEMS);
 
             for (int i = 0; i < messagesJSONArray.length(); i++) {
@@ -273,16 +275,7 @@ public class MainActivity extends AppCompatActivity {
                     isChat = false;
                 }
 
-                String dialogPhoto = " ";
-                try {
-                    dialogPhoto = jsonMessage.getString(PHOTO_50);
-                } catch (JSONException e) {
-                    if (!isChat) {
-                        dialogPhoto = dbHelper.getFromUsersPhoto50UrlById(jsonMessage.getString(USER_ID));
-                    } else {
-                        dialogPhoto = "0";
-                    }
-                }
+                String dialogPhoto = getDialogPhoto(jsonMessage, isChat);
 
                 // иначе не работает! причина неизвестна
                 if(String.valueOf(idsList.contains(chatId)).equals("false")) {
@@ -315,6 +308,7 @@ public class MainActivity extends AppCompatActivity {
                     messages.add(0, jsonMessage.getString(BODY) + " ");
 
                 } else {
+
                     int dialogIndex = idsList.indexOf(chatId);
                     if (!messages.get(dialogIndex).equals(jsonMessage.getString(BODY))) {
                         String dialogTitle = users.get(dialogIndex);
@@ -329,13 +323,39 @@ public class MainActivity extends AppCompatActivity {
                         messages.add(0, jsonMessage.getString(BODY));
                         users.add(0, dialogTitle);
                     }
+
                 }
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
         updateDialogsAdapter(users, idsList, photosUrlsList, messages);
+    }
+
+    /**
+     * Получение изображения диалога
+     * @param jsonMessage - json-объект сообщения
+     * @param isChat - диалог с одним человеком или беседа
+     * @return - ссылка на фото диалога
+     */
+    private String getDialogPhoto(JSONObject jsonMessage, boolean isChat) {
+        String dialogPhoto;
+        try {
+            dialogPhoto = jsonMessage.getString(PHOTO_50);
+        } catch (JSONException e) {
+            if (!isChat) {
+                try {
+                    dialogPhoto = dbHelper.getFromUsersPhoto50UrlById(jsonMessage.getString(USER_ID));
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                    dialogPhoto = "0";
+                }
+            } else {
+                dialogPhoto = "0";
+            }
+        }
+
+        return dialogPhoto;
     }
 
     /**
@@ -461,14 +481,14 @@ public class MainActivity extends AppCompatActivity {
 
         ArrayList<String> users = new ArrayList<String>();
         ArrayList<String> messages = new ArrayList<String>();
+        ArrayList<String> idsList = new ArrayList<>();
+        ArrayList<String> photosUrls = new ArrayList<>();
 
         VKApiGetDialogResponse getMessagesResponse = (VKApiGetDialogResponse) response.parsedModel;
 
         JSONObject jsonResponse = (JSONObject) response.json.get(RESPONSE);
         JSONArray messagesJSONArray = jsonResponse.getJSONArray(ITEMS);
 
-        ArrayList<String> idsList = new ArrayList<>();
-        ArrayList<String> photosUrls = new ArrayList<>();
         for (int i = 0; i < messagesJSONArray.length(); i++) {
             JSONObject jsonMessage = (JSONObject) messagesJSONArray.get(i);
             jsonMessage = jsonMessage.getJSONObject(MESSAGE);
@@ -512,12 +532,10 @@ public class MainActivity extends AppCompatActivity {
 
                                 try {
                                     String photo50Url = list.get(0).fields.getString(PHOTO_50);
-
                                     dbHelper.insertUsers(finalJsonMessage.getString(USER_ID), nickname, photo50Url);
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
-
                             }
                         });
                         dialogPhoto = dbHelper.getFromUsersPhoto50UrlById(jsonMessage.getString(USER_ID));
@@ -526,7 +544,6 @@ public class MainActivity extends AppCompatActivity {
                     dialogPhoto = "0";
                 }
             }
-
             idsList.add(chatId);
             photosUrls.add(dialogPhoto);
         }
@@ -564,7 +581,6 @@ public class MainActivity extends AppCompatActivity {
      */
     private ArrayList<NavigationTabBar.Model> initializeModels() {
         ArrayList<NavigationTabBar.Model> models = new ArrayList<>();
-        String[] colors = getResources().getStringArray(R.array.default_preview);
 
         models.add(
                 new NavigationTabBar.Model.Builder(
@@ -595,7 +611,6 @@ public class MainActivity extends AppCompatActivity {
         navigationTabBar.setViewPager(viewPager, 0);
         //IMPORTANT: ENABLE SCROLL BEHAVIOUR IN COORDINATOR LAYOUT
         navigationTabBar.setBehaviorEnabled(true);
-
     }
 
     private void setNavigationTabBarListeners(NavigationTabBar navigationTabBar) {
@@ -763,7 +778,6 @@ public class MainActivity extends AppCompatActivity {
                         public void onError(VKError error) {
                             super.onError(error);
                         }
-
                     });
 
                 } else if (position == 1) {
@@ -803,21 +817,18 @@ public class MainActivity extends AppCompatActivity {
                                     return true;
                                 }
                             });
-
                             mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                                 @Override
                                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                                     mListView.smoothOpenMenu(position);
                                 }
                             });
-
                         }
 
                         @Override
                         public void onError(VKError error) {
                             super.onError(error);
                         }
-
                     });
                 } else {
                     /**
@@ -825,7 +836,6 @@ public class MainActivity extends AppCompatActivity {
                      */
                     recyclerView.setAdapter(new CustomAdapter(MainActivity.this));
                 }
-
 
                 container.addView(view);
                 return view;
@@ -987,7 +997,6 @@ public class MainActivity extends AppCompatActivity {
                         messagesDates.add(getMessageDate(message.date));
                         messagesSenders.add(senderNickname[0]);
                         messagesSendersIds.add(String.valueOf(message.user_id));
-
                     }
 
                     /**
@@ -1005,7 +1014,6 @@ public class MainActivity extends AppCompatActivity {
                             .putExtra(FWD_MESSAGES_DATES_LISTS, fwdMessagesDatesLists)
                             .putExtra(FWD_MESSAGES_SENDERS_LISTS, fwdMessagesSendersLists)
                     );
-
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -1045,7 +1053,10 @@ public class MainActivity extends AppCompatActivity {
 
             final String[] fwdMessageUser = {dbHelper.getFromUsersNicknameById(String.valueOf(fwdMessage.user_id))};
             if (fwdMessageUser[0] == null) {
-                VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, fwdMessage.user_id, FIELDS, PHOTO_50));
+                VKRequest request = VKApi.users().get(VKParameters.from(
+                        VKApiConst.USER_ID, fwdMessage.user_id,
+                        FIELDS, PHOTO_50
+                ));
                 request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                     @Override
                     public void onComplete(VKResponse response) {
@@ -1060,10 +1071,6 @@ public class MainActivity extends AppCompatActivity {
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        /**
-                         * Добавление пользователя в локальную БД
-                         */
-
                     }
                 });
             }
@@ -1079,7 +1086,6 @@ public class MainActivity extends AppCompatActivity {
                  */
                 getFwdMessage(fwdMessage, fwdMessagesBodies, fwdMessagesSenders, fwdMessagesDates);
             }
-
         }
     }
 
@@ -1154,7 +1160,6 @@ public class MainActivity extends AppCompatActivity {
                     recyclerView.setAdapter(new CustomAdapter(MainActivity.this));
                 }
 
-
                 container.addView(view);
                 return view;
             }
@@ -1172,35 +1177,21 @@ public class MainActivity extends AppCompatActivity {
                 // create "open" item
                 SwipeMenuItem openDialogItem = new SwipeMenuItem(
                         getApplicationContext());
-                // set item background
                 openDialogItem.setBackground(R.color.colorLightGrey);
-                // set item width
                 openDialogItem.setWidth(dp2px(72));
-                // set item title
                 openDialogItem.setIcon(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_lead_pencil));
-
-//                openDialogItem.setTitle("Open");
-                // set item title fontsize
                 openDialogItem.setTitleSize(12);
-                // set item title font color
                 openDialogItem.setTitleColor(Color.WHITE);
-                // add to menu
                 menu.addMenuItem(openDialogItem);
 
-                // create "open" item
+                // create "remove" item
                 SwipeMenuItem removeFriendItem = new SwipeMenuItem(
                         getApplicationContext());
-                // set item background
                 removeFriendItem.setBackground(R.color.colorLightGrey);
-                // set item width
                 removeFriendItem.setWidth(dp2px(72));
-                // set item title
                 removeFriendItem.setIcon(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_close));
-                // set item title fontsize
                 removeFriendItem.setTitleSize(12);
-                // set item title font color
                 removeFriendItem.setTitleColor(Color.WHITE);
-                // add to menu
                 menu.addMenuItem(removeFriendItem);
             }
         };
@@ -1535,7 +1526,6 @@ public class MainActivity extends AppCompatActivity {
         }, timeDelay += 350);
     }
 
-
     /**
      * Получение имени и фимилии пользователя по его идентификатору
      */
@@ -1582,5 +1572,4 @@ public class MainActivity extends AppCompatActivity {
         }
         return nickname[0];
     }
-
 }

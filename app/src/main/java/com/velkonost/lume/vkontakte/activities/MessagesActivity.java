@@ -91,6 +91,9 @@ public class MessagesActivity extends AppCompatActivity {
      */
     ArrayList<String> messagesSenders = new ArrayList<>();
 
+    /**
+     * Список идентификаторов отправителей сообщений
+     */
     ArrayList<String> messagesSendersIds = new ArrayList<>();
 
     /**
@@ -138,17 +141,36 @@ public class MessagesActivity extends AppCompatActivity {
      */
     private String id;
 
+    /**
+     * Данные, необходимые для связи с сервером и обновления списка сообщений
+     */
     private String ts, pts;
 
+    /**
+     * Локальная БД
+     */
     private DBHelper dbHelper;
 
+    /**
+     * Таймер для обновления сообщений
+     */
     private TimerCheckMessagesState timer;
 
     private RecyclerView recyclerView;
 
+    /**
+     * Поле для отображения кол-ва выбранных сообщений для пересылания
+     */
     private TextView fwdMessagesToSend;
+
+    /**
+     * Список сообщений, выбранных чтобы переслать
+     */
     private ArrayList<String> fwdMessagesToSendList;
 
+    /**
+     * Кол-во сообщений, выбранных переслать
+     */
     private int fwdMessagesToSendAmount;
 
     @Override
@@ -158,41 +180,64 @@ public class MessagesActivity extends AppCompatActivity {
 
         connectLongPollServer();
         initializeMessages();
-        id = getIntent().getStringExtra(ID);
-        dbHelper = new DBHelper(this);
-        fwdMessagesToSendAmount = 0;
 
+        id = getIntent().getStringExtra(ID);
+        fwdMessagesToSendAmount = 0;
+        fwdMessagesToSendList = new ArrayList<>();
+
+        dbHelper = new DBHelper(this);
         ts = dbHelper.getValueFromMetaData(TS_MESSAGES);
         pts = dbHelper.getValueFromMetaData(PTS_MESSAGES);
 
-        fwdMessagesToSendList = new ArrayList<>();
         fwdMessagesToSend = (TextView) findViewById(R.id.fwd_messages);
         editNewMessage = (EditText) findViewById(R.id.editNewMessage);
         btnSendNewMessage = (ImageButton) findViewById(R.id.sendNewMessage);
 
         recyclerView = (RecyclerView) findViewById(R.id.rv);
         setRecyclerViewConfiguration(recyclerView);
-
         recyclerView.setAdapter(new MessagesAdapter(MessagesActivity.this, messagesList, MessagesActivity.this, id));
 
         /**
          * Отправка нового сообщения
          */
+        setBtnSendNewMessageListener();
+
+
+        setEditNewMessageListener();
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                timer = new TimerCheckMessagesState(1000000000, REFRESH_MESSAGES_PERIOD);
+                timer.start();
+
+            }
+        }, REFRESH_MESSAGES_PERIOD);
+    }
+
+    /**
+     * Очищение нужных полей и избавление от лишних данных после отправки сообщения
+     */
+    private void clearFieldsAfterSendMessage() {
+        editNewMessage.setText("");
+        fwdMessagesToSend.setText("");
+        fwdMessagesToSendList = new ArrayList<String>();
+        fwdMessagesToSendAmount = 0;
+    }
+
+    private void setBtnSendNewMessageListener() {
         btnSendNewMessage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String typeOfDialog = Integer.parseInt(id) < 100000000 ? CHAT_ID : USER_ID;
-
                 String newMessageBody = editNewMessage.getText().toString();
-                editNewMessage.setText("");
+
 
                 String fwdMessagesToSendStr = "";
                 for (int i = 0; i < fwdMessagesToSendList.size(); i++) {
                     fwdMessagesToSendStr += fwdMessagesToSendList.get(i) + ",";
                 }
-                fwdMessagesToSendList = new ArrayList<String>();
-                fwdMessagesToSendAmount = 0;
-                fwdMessagesToSend.setText("");
+                clearFieldsAfterSendMessage();
 
                 VKRequest request = new VKRequest(
                         SEND_MESSAGE,
@@ -213,7 +258,9 @@ public class MessagesActivity extends AppCompatActivity {
                 });
             }
         });
+    }
 
+    private void setEditNewMessageListener() {
         editNewMessage.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -230,15 +277,6 @@ public class MessagesActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable s) {}
         });
-
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                timer = new TimerCheckMessagesState(1000000000, REFRESH_MESSAGES_PERIOD);
-                timer.start();
-
-            }
-        }, REFRESH_MESSAGES_PERIOD);
     }
 
     @Override
@@ -284,7 +322,6 @@ public class MessagesActivity extends AppCompatActivity {
                         messagesSenders, messagesSendersIds, messagesIsOut,
                         fwdMessagesBodiesLists, fwdMessagesDatesLists, fwdMessagesSendersLists
                 );
-
     }
 
     /**
@@ -401,11 +438,6 @@ public class MessagesActivity extends AppCompatActivity {
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
-
-                            /**
-                             * Добавление пользователя в локальную БД
-                             */
-
                         }
                     });
                 }
@@ -421,7 +453,6 @@ public class MessagesActivity extends AppCompatActivity {
                      */
                     getFwdMessage(fwdMessage, fwdMessagesBodies, fwdMessagesSenders, fwdMessagesDates);
                 }
-
             }
         }
 
@@ -514,7 +545,6 @@ public class MessagesActivity extends AppCompatActivity {
                         messagesSendersIds.add(0, String.valueOf(message.user_id));
                     }
                 }
-
                 setNewMessagesData();
                 refreshMessagesAdapter();
             }
@@ -591,7 +621,6 @@ public class MessagesActivity extends AppCompatActivity {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-
                 }
             });
         }
@@ -613,5 +642,4 @@ public class MessagesActivity extends AppCompatActivity {
             fwdMessagesToSend.setText(fwdMessagesToSendAmount + " пересланных сообщений");
         }
     }
-
 }

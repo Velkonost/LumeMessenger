@@ -98,7 +98,6 @@ public class CreateChatAdapter extends RecyclerView.Adapter<CreateChatAdapter.Vi
                     );
 
                     ((MainActivity)ctx).setDefaultModeFromCreateChat();
-
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -110,7 +109,6 @@ public class CreateChatAdapter extends RecyclerView.Adapter<CreateChatAdapter.Vi
             }
 
         });
-
     }
 
     @Override
