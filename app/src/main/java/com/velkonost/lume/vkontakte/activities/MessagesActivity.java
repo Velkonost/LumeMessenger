@@ -20,7 +20,6 @@ import com.velkonost.lume.R;
 import com.velkonost.lume.vkontakte.adapters.MessagesAdapter;
 import com.velkonost.lume.vkontakte.db.DBHelper;
 import com.velkonost.lume.vkontakte.models.MessagesList;
-import com.vk.sdk.api.VKApi;
 import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKError;
 import com.vk.sdk.api.VKParameters;
@@ -41,13 +40,9 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import static com.velkonost.lume.Constants.DEBUG_TAG;
-import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_LONG_POLL_MESSAGES_HISTORY;
-import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_LONG_POLL_SERVER;
 import static com.velkonost.lume.vkontakte.Constants.API_METHODS.SEND_MESSAGE;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIELDS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FORWARD_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ID;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.IS_NEED_PTS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.PTS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.PTS_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.TS;
@@ -68,6 +63,9 @@ import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.PHOTO_50;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.RESPONSE;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.USER_ID;
+import static com.velkonost.lume.vkontakte.VkApiHelper.getLongPollServer;
+import static com.velkonost.lume.vkontakte.VkApiHelper.getMessagesHistoryFromLongPollServer;
+import static com.velkonost.lume.vkontakte.VkApiHelper.getUserInfoById;
 
 /**
  * Активность открытого диалога
@@ -353,7 +351,7 @@ public class MessagesActivity extends AppCompatActivity {
      * Получение данных, необходимых для обновления списка сообщений
      */
     private void connectLongPollServer() {
-        VKRequest requestThisProfileInfo = new VKRequest(GET_LONG_POLL_SERVER, VKParameters.from(IS_NEED_PTS, true));
+        VKRequest requestThisProfileInfo = getLongPollServer();
         requestThisProfileInfo.executeWithListener(new VKRequest.VKRequestListener() {
             @Override
             public void onComplete(VKResponse response) {
@@ -416,63 +414,63 @@ public class MessagesActivity extends AppCompatActivity {
             ArrayList<String> fwdMessagesSenders,
             ArrayList<String> fwdMessagesDates
     ) {
-            int messageFwdAmount = message.fwd_messages.size();
-            for (int fwdMessageIndex = 0; fwdMessageIndex < messageFwdAmount; fwdMessageIndex++) {
+        int messageFwdAmount = message.fwd_messages.size();
+        for (int fwdMessageIndex = 0; fwdMessageIndex < messageFwdAmount; fwdMessageIndex++) {
 
-                final VKApiMessage fwdMessage = message.fwd_messages.get(fwdMessageIndex);
+            final VKApiMessage fwdMessage = message.fwd_messages.get(fwdMessageIndex);
 
-                final String[] fwdMessageUser = {dbHelper.getFromUsersNicknameById(String.valueOf(fwdMessage.user_id))};
-                if (fwdMessageUser[0] == null) {
-                    VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, fwdMessage.user_id, FIELDS, PHOTO_50));
-                    request.executeSyncWithListener(new VKRequest.VKRequestListener() {
-                        @Override
-                        public void onComplete(VKResponse response) {
-                            super.onComplete(response);
+            final String[] fwdMessageUser = {dbHelper.getFromUsersNicknameById(String.valueOf(fwdMessage.user_id))};
+            if (fwdMessageUser[0] == null) {
+                VKRequest request = getUserInfoById(String.valueOf(fwdMessage.user_id));
+                request.executeSyncWithListener(new VKRequest.VKRequestListener() {
+                    @Override
+                    public void onComplete(VKResponse response) {
+                        super.onComplete(response);
 
-                            VKList list = (VKList) response.parsedModel;
-                            fwdMessageUser[0] = String.valueOf(list.get(0));
+                        VKList list = (VKList) response.parsedModel;
+                        fwdMessageUser[0] = String.valueOf(list.get(0));
 
-                            try {
-                                String photo50Url = String.valueOf(list.get(0).fields.get(PHOTO_50));
-                                dbHelper.insertUsers(String.valueOf(fwdMessage.user_id), fwdMessageUser[0], photo50Url);
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
+                        try {
+                            String photo50Url = String.valueOf(list.get(0).fields.get(PHOTO_50));
+                            dbHelper.insertUsers(String.valueOf(fwdMessage.user_id), fwdMessageUser[0], photo50Url);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
-                    });
-                }
+                    }
+                });
+            }
 
-                fwdMessagesSenders.add(fwdMessageUser[0]);
-                fwdMessagesBodies.add(fwdMessage.body);
-                fwdMessagesDates.add(getMessageDate(fwdMessage.date));
+            fwdMessagesSenders.add(fwdMessageUser[0]);
+            fwdMessagesBodies.add(fwdMessage.body);
+            fwdMessagesDates.add(getMessageDate(fwdMessage.date));
 
-                int fwdMessageFwdAmount = fwdMessage.fwd_messages.size();
-                if (fwdMessageFwdAmount > 0) {
-                    /**
-                     * Если у пересланного сообщения есть пересланные сообщения
-                     */
-                    getFwdMessage(fwdMessage, fwdMessagesBodies, fwdMessagesSenders, fwdMessagesDates);
-                }
+            int fwdMessageFwdAmount = fwdMessage.fwd_messages.size();
+            if (fwdMessageFwdAmount > 0) {
+                /**
+                 * Если у пересланного сообщения есть пересланные сообщения
+                 */
+                getFwdMessage(fwdMessage, fwdMessagesBodies, fwdMessagesSenders, fwdMessagesDates);
             }
         }
+    }
 
     /**
-         * Конвертация из unix в нормальную дату
-         * @param unixSeconds - время в unix-системе
-         * @return - отформатированная дата
+     * Конвертация из unix в нормальную дату
+     * @param unixSeconds - время в unix-системе
+     * @return - отформатированная дата
      */
     private String getMessageDate(long unixSeconds) {
-            Date date = new Date(unixSeconds * 1000L); // *1000 is to convert seconds to milliseconds
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z"); // the format of your date
-            sdf.setTimeZone(TimeZone.getDefault()); // give a timezone reference for formating (see comment at the bottom
-            return sdf.format(date).substring(0, 19);
-        }
+        Date date = new Date(unixSeconds * 1000L); // *1000 is to convert seconds to milliseconds
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z"); // the format of your date
+        sdf.setTimeZone(TimeZone.getDefault()); // give a timezone reference for formating (see comment at the bottom
+        return sdf.format(date).substring(0, 19);
+    }
 
     /**
      * Обновление списка сообщений
      */
     private void refreshMessages() {
-        VKRequest request = new VKRequest(GET_LONG_POLL_MESSAGES_HISTORY, VKParameters.from(TS, ts, PTS, pts, FIELDS, ""));
+        VKRequest request = getMessagesHistoryFromLongPollServer(ts, pts);
         request.executeWithListener(new VKRequest.VKRequestListener() {
             @Override
             public void onComplete(VKResponse response) {
@@ -494,55 +492,55 @@ public class MessagesActivity extends AppCompatActivity {
                 }
 
                 for (int i = 0; i < messagesJSONArray.length(); i++) {
-                    VKApiMessage message = null;
-                    String chatId = null;
+
                     try {
-                        message = new VKApiMessage(messagesJSONArray.getJSONObject(i));
-                        chatId = getDialogIdOfNewMessage((JSONObject) messagesJSONArray.get(i));
+                        VKApiMessage message = new VKApiMessage(messagesJSONArray.getJSONObject(i));
+                        String chatId = getDialogIdOfNewMessage((JSONObject) messagesJSONArray.get(i));
+
+                        if (chatId.equals(id)) {
+                            /**
+                             * Список тел пересланных сообщений
+                             */
+                            ArrayList<String> fwdMessagesBodies = new ArrayList<>();
+
+                            /**
+                             * Список отправителей пересланных сообщений
+                             */
+                            ArrayList<String> fwdMessagesSenders = new ArrayList<>();
+
+                            /**
+                             * Список дат пересланных сообщений
+                             */
+                            ArrayList<String> fwdMessagesDates = new ArrayList<>();
+
+                            /**
+                             * Получение данных о пересланных сообщениях
+                             */
+                            getFwdMessage(message, fwdMessagesBodies, fwdMessagesSenders, fwdMessagesDates);
+
+                            if (message.out) {
+                                /**
+                                 * Если авторизованный пользователь - отправитель сообщения
+                                 */
+                                senderNickname = "Я";
+                            } else {
+                                senderNickname = getNicknameById(String.valueOf(message.user_id));
+                            }
+
+                            fwdMessagesBodiesLists.add(0, fwdMessagesBodies);
+                            fwdMessagesDatesLists.add(0, fwdMessagesDates);
+                            fwdMessagesSendersLists.add(0, fwdMessagesSenders);
+
+                            messagesIds.add(0, String.valueOf(message.id));
+                            messagesBodies.add(0, message.body);
+                            messagesIsOut.add(0, String.valueOf(message.out));
+                            messagesDates.add(0, getMessageDate(message.date));
+                            messagesSenders.add(0, senderNickname);
+                            Log.i("KEKE", messagesJSONArray.getJSONObject(i).getString(USER_ID));
+                            messagesSendersIds.add(0, String.valueOf(messagesJSONArray.getJSONObject(i).getString(USER_ID)));
+                        }
                     } catch (JSONException e) {
                         e.printStackTrace();
-                    }
-
-                    if (chatId.equals(id)) {
-                        /**
-                         * Список тел пересланных сообщений
-                         */
-                        ArrayList<String> fwdMessagesBodies = new ArrayList<>();
-
-                        /**
-                         * Список отправителей пересланных сообщений
-                         */
-                        ArrayList<String> fwdMessagesSenders = new ArrayList<>();
-
-                        /**
-                         * Список дат пересланных сообщений
-                         */
-                        ArrayList<String> fwdMessagesDates = new ArrayList<>();
-
-                        /**
-                         * Получение данных о пересланных сообщениях
-                         */
-                        getFwdMessage(message, fwdMessagesBodies, fwdMessagesSenders, fwdMessagesDates);
-
-                        if (message.out) {
-                            /**
-                             * Если авторизованный пользователь - отправитель сообщения
-                             */
-                            senderNickname = "Я";
-                        } else {
-                            senderNickname = getNicknameById(String.valueOf(message.user_id));
-                        }
-
-                        fwdMessagesBodiesLists.add(0, fwdMessagesBodies);
-                        fwdMessagesDatesLists.add(0, fwdMessagesDates);
-                        fwdMessagesSendersLists.add(0, fwdMessagesSenders);
-
-                        messagesIds.add(0, String.valueOf(message.id));
-                        messagesBodies.add(0, message.body);
-                        messagesIsOut.add(0, String.valueOf(message.out));
-                        messagesDates.add(0, getMessageDate(message.date));
-                        messagesSenders.add(0, senderNickname);
-                        messagesSendersIds.add(0, String.valueOf(message.user_id));
                     }
                 }
                 setNewMessagesData();
@@ -607,7 +605,7 @@ public class MessagesActivity extends AppCompatActivity {
             /**
              * Иначе через API VK
              */
-            VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, id, FIELDS, PHOTO_50));
+            VKRequest request = getUserInfoById(id);
             request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                 @Override
                 public void onComplete(VKResponse response) {

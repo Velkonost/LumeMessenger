@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.velkonost.lume.R;
-import com.velkonost.lume.vkontakte.db.DBHelper;
 import com.velkonost.lume.vkontakte.models.MessagesList;
 
 /**
@@ -19,13 +18,10 @@ class FwdMessagesAdapter extends RecyclerView.Adapter<FwdMessagesAdapter.ViewHol
 
     private Context ctx;
     private MessagesList messagesList;
-    private DBHelper dbHelper;
 
     FwdMessagesAdapter(MessagesList messagesList, Context ctx) {
         this.messagesList = messagesList;
         this.ctx = ctx;
-        dbHelper = new DBHelper(ctx);
-
     }
 
     @Override

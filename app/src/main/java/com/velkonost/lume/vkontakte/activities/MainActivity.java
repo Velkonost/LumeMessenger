@@ -32,10 +32,7 @@ import com.velkonost.lume.vkontakte.adapters.DialogsAdapter;
 import com.velkonost.lume.vkontakte.adapters.FriendsAdapter;
 import com.velkonost.lume.vkontakte.adapters.SearchUsersAdapter;
 import com.velkonost.lume.vkontakte.db.DBHelper;
-import com.vk.sdk.api.VKApi;
-import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKError;
-import com.vk.sdk.api.VKParameters;
 import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
 import com.vk.sdk.api.model.VKApiDialog;
@@ -54,21 +51,9 @@ import java.util.TimeZone;
 
 import devlight.io.library.ntb.NavigationTabBar;
 
-import static com.velkonost.lume.Constants.COMMA;
 import static com.velkonost.lume.Constants.DEBUG_TAG;
 import static com.velkonost.lume.R.id.fab;
-import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_MESSAGES;
-import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_PROFILE_INFO;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.AMOUNT_DIALOGS;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.AMOUNT_MESSAGES;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.COUNT;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.DOMAIN;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIELDS;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIRST_NAME;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.HINTS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ID;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.LAST_NAME;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ORDER;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_BODIES_LISTS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_DATES_LISTS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_SENDERS_LISTS;
@@ -90,6 +75,10 @@ import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.USER_ID;
 import static com.velkonost.lume.vkontakte.Constants.VIEW_PAGER_PAGES.DIALOGS_PAGE;
 import static com.velkonost.lume.vkontakte.Constants.VIEW_PAGER_PAGES.FRIENDS_PAGE;
 import static com.velkonost.lume.vkontakte.Constants.VIEW_PAGER_PAGES.SETTINGS_PAGE;
+import static com.velkonost.lume.vkontakte.VkApiHelper.getDialogs;
+import static com.velkonost.lume.vkontakte.VkApiHelper.getFriends;
+import static com.velkonost.lume.vkontakte.VkApiHelper.getMessagesOfDialog;
+import static com.velkonost.lume.vkontakte.VkApiHelper.getUserInfoById;
 
 /**
  * Основная активность
@@ -232,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
      * Получение по API обновленного списка диалогов
      */
     private void updateDialogs() {
-        VKRequest requestMessages = VKApi.messages().getDialogs(VKParameters.from(COUNT, AMOUNT_DIALOGS));
+        VKRequest requestMessages = getDialogs();
         requestMessages.executeWithListener(new VKRequest.VKRequestListener() {
             @Override
             public void onComplete(VKResponse response) {
@@ -285,12 +274,7 @@ public class MainActivity extends AppCompatActivity {
                     final String[] dialogTitle = {jsonMessage.getString(TITLE)};
 
                     if (dialogTitle[0].equals("")) {
-                        VKRequest request = VKApi.users().get(
-                                VKParameters.from(
-                                        VKApiConst.USER_ID,
-                                        jsonMessage.getString(USER_ID)
-                                )
-                        );
+                        VKRequest request = getUserInfoById(jsonMessage.getString(USER_ID));
 
                         request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                             @Override
@@ -422,30 +406,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Получение имени и фамилии авторизованного пользователя
-     */
-    private void getThisProfileNickname() {
-        VKRequest requestThisProfileInfo = new VKRequest(GET_PROFILE_INFO, VKParameters.from(FIELDS, FIRST_NAME + COMMA + LAST_NAME));
-        requestThisProfileInfo.executeWithListener(new VKRequest.VKRequestListener() {
-            @Override
-            public void onComplete(VKResponse response) {
-                super.onComplete(response);
-                JSONObject list = response.json;
-                try {
-                    JSONObject a = (JSONObject) list.get(RESPONSE);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onError(VKError error) {
-                super.onError(error);
-            }
-        });
-    }
-
-    /**
      * Составление списка диалогов с их последним сообщением
      */
     private void completeRequestMessages(VKList<VKApiDialog> list, final ArrayList<String> users,
@@ -455,8 +415,7 @@ public class MainActivity extends AppCompatActivity {
             final String[] dialogTitle = {msg.message.title};
 
             if (dialogTitle[0].equals("")) {
-                VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, msg.message.user_id));
-
+                VKRequest request = getUserInfoById(String.valueOf(msg.message.user_id));
                 request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                     @Override
                     public void onComplete(VKResponse response) {
@@ -511,10 +470,7 @@ public class MainActivity extends AppCompatActivity {
                     dialogPhoto = dbHelper.getFromUsersPhoto50UrlById(jsonMessage.getString(USER_ID));
                     if (dialogPhoto.equals("-1")) {
 
-                        final VKRequest request = VKApi.users().get(VKParameters.from(
-                                VKApiConst.USER_ID, jsonMessage.getString(USER_ID),
-                                FIELDS, PHOTO_50)
-                        );
+                        final VKRequest request = getUserInfoById(jsonMessage.getString(USER_ID));
                         final JSONObject finalJsonMessage = jsonMessage;
 
                         request.executeWithListener(new VKRequest.VKRequestListener() {
@@ -664,57 +620,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Инициализация таблицы пользователей в локальной БД
-     */
-    private void initializeUsersTable() {
-        /**
-         * Получение информации о друзьях авторизованного пользователя
-         */
-        final VKRequest requestFriends = VKApi.friends().get(
-                VKParameters.from(FIELDS, FIRST_NAME + COMMA + LAST_NAME + COMMA + ID + COMMA + PHOTO_50)
-        );
-
-        requestFriends.executeWithListener(new VKRequest.VKRequestListener() {
-            @Override
-            public void onComplete(VKResponse response) {
-                super.onComplete(response);
-
-                VKList list = (VKList)  response.parsedModel;
-                for (int i = 0; i < list.size(); i++) {
-                    try {
-                        /**
-                         * Добавление пользователя в локальную БД
-                         */
-                        dbHelper.insertUsers(
-                                list.get(i).fields.getString(ID),
-                                list.get(i).toString(),
-                                list.get(i).fields.getString(PHOTO_50)
-                        );
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-//                initializeMessagesTable();
-            }
-
-            @Override
-            public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
-                super.attemptFailed(request, attemptNumber, totalAttempts);
-            }
-
-            @Override
-            public void onError(VKError error) {
-                super.onError(error);
-            }
-
-            @Override
-            public void onProgress(VKRequest.VKProgressType progressType, long bytesLoaded, long bytesTotal) {
-                super.onProgress(progressType, bytesLoaded, bytesTotal);
-            }
-        });
-    }
-
-    /**
      * Первая инициализация стандартного адаптера вкладок (с запросами к API)
      */
     private void initializeFirstPageAdapterDefault() {
@@ -755,7 +660,7 @@ public class MainActivity extends AppCompatActivity {
                     /**
                      * Получение последних "count" диалогов с их последними сообщениями
                      */
-                    VKRequest requestMessages = VKApi.messages().getDialogs(VKParameters.from(COUNT, AMOUNT_DIALOGS));
+                    VKRequest requestMessages = getDialogs();
                     requestMessages.executeWithListener(new VKRequest.VKRequestListener() {
                         @Override
                         public void onComplete(VKResponse response) {
@@ -788,10 +693,7 @@ public class MainActivity extends AppCompatActivity {
                     /**
                      * Получение необходимой информации о друзьях, сортировка в порядке важности
                      */
-                    final VKRequest requestFriends = VKApi.friends().get(VKParameters.from(
-                            FIELDS, FIRST_NAME + COMMA + LAST_NAME + COMMA + DOMAIN + COMMA + PHOTO_50,
-                            ORDER, HINTS));
-
+                    final VKRequest requestFriends = getFriends();
                     requestFriends.executeWithListener(new VKRequest.VKRequestListener() {
                         @Override
                         public void onComplete(VKResponse response) {
@@ -918,10 +820,7 @@ public class MainActivity extends AppCompatActivity {
         /**
          * Получение "count" последних сообщений диалога
          */
-        VKRequest request = new VKRequest(
-                GET_MESSAGES,
-                VKParameters.from(typeOfDialog, id, COUNT, AMOUNT_MESSAGES)
-        );
+        VKRequest request = getMessagesOfDialog(typeOfDialog, id);
         request.executeWithListener(new VKRequest.VKRequestListener() {
             @Override
             public void onComplete(VKResponse response) {
@@ -1053,10 +952,7 @@ public class MainActivity extends AppCompatActivity {
 
             final String[] fwdMessageUser = {dbHelper.getFromUsersNicknameById(String.valueOf(fwdMessage.user_id))};
             if (fwdMessageUser[0] == null) {
-                VKRequest request = VKApi.users().get(VKParameters.from(
-                        VKApiConst.USER_ID, fwdMessage.user_id,
-                        FIELDS, PHOTO_50
-                ));
+                VKRequest request = getUserInfoById(String.valueOf(fwdMessage.user_id));
                 request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                     @Override
                     public void onComplete(VKResponse response) {
@@ -1495,7 +1391,7 @@ public class MainActivity extends AppCompatActivity {
             final String chatId,
             final VKApiMessage message
     ) {
-        final VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, message.user_id, FIELDS, PHOTO_50));
+        final VKRequest request = getUserInfoById(String.valueOf(message.user_id));
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override
@@ -1538,7 +1434,7 @@ public class MainActivity extends AppCompatActivity {
             /**
              * Иначе через API VK
              */
-            final VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, id, FIELDS, PHOTO_50));
+            final VKRequest request = getUserInfoById(id);
             Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
                 @Override

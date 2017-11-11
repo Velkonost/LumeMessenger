@@ -12,17 +12,15 @@ import android.widget.TextView;
 import com.squareup.picasso.Picasso;
 import com.velkonost.lume.R;
 import com.velkonost.lume.vkontakte.models.RoundImageView;
-import com.vk.sdk.api.VKParameters;
 import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
 import com.vk.sdk.api.model.VKList;
 
 import org.json.JSONException;
 
-import static com.velkonost.lume.vkontakte.Constants.API_METHODS.DELETE_FRIEND;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ID;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.PHOTO_50;
-import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.USER_ID;
+import static com.velkonost.lume.vkontakte.VkApiHelper.deleteFriend;
 import static com.vk.sdk.VKUIHelper.getApplicationContext;
 
 
@@ -35,14 +33,9 @@ public class FriendsAdapter extends BaseAdapter {
     private Context ctx;
     private VKList listFriends;
 
-    private boolean isInviteToChatMode;
-
-
     public FriendsAdapter(Context ctx, VKList listFriends) {
         this.ctx = ctx;
         this.listFriends = listFriends;
-
-        isInviteToChatMode = false;
     }
 
     public VKList getListFriends() {
@@ -90,10 +83,7 @@ public class FriendsAdapter extends BaseAdapter {
      public void removeFriend(final int position) {
          VKRequest removeFriendRequest = null;
          try {
-             removeFriendRequest = new VKRequest(
-                     DELETE_FRIEND,
-                     VKParameters.from(USER_ID, listFriends.get(position).fields.get(ID)));
-
+             removeFriendRequest = deleteFriend(String.valueOf(listFriends.get(position).fields.get(ID)));
              removeFriendRequest.executeWithListener(new VKRequest.VKRequestListener() {
                  @Override
                  public void onComplete(VKResponse response) {

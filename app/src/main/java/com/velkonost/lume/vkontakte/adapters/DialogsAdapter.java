@@ -16,9 +16,6 @@ import com.velkonost.lume.R;
 import com.velkonost.lume.vkontakte.activities.MessagesActivity;
 import com.velkonost.lume.vkontakte.db.DBHelper;
 import com.velkonost.lume.vkontakte.models.RoundImageView;
-import com.vk.sdk.api.VKApi;
-import com.vk.sdk.api.VKApiConst;
-import com.vk.sdk.api.VKParameters;
 import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
 import com.vk.sdk.api.model.VKApiMessage;
@@ -33,13 +30,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
 
-import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_MESSAGES;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.AMOUNT_DIALOGS;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.AMOUNT_MESSAGES;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.COUNT;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIELDS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ID;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.OFFSET;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_BODIES_LISTS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_DATES_LISTS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_SENDERS_LISTS;
@@ -57,6 +49,9 @@ import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.PHOTO_50;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.RESPONSE;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.TITLE;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.USER_ID;
+import static com.velkonost.lume.vkontakte.VkApiHelper.getDialogs;
+import static com.velkonost.lume.vkontakte.VkApiHelper.getMessagesOfDialog;
+import static com.velkonost.lume.vkontakte.VkApiHelper.getUserInfoById;
 
 /**
  * Адаптер списка диалогов
@@ -128,11 +123,7 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
                 @Override
                 public void onClick(View v) {
                     alreadyShowedDialogsAmount += AMOUNT_DIALOGS;
-                    VKRequest requestUpdatedDialogs = VKApi.messages().getDialogs(VKParameters.from(
-                            COUNT, AMOUNT_DIALOGS,
-                            OFFSET, alreadyShowedDialogsAmount
-                    ));
-
+                    VKRequest requestUpdatedDialogs = getDialogs(alreadyShowedDialogsAmount);
                     requestUpdatedDialogs.executeWithListener(new VKRequest.VKRequestListener() {
                         @Override
                         public void onComplete(VKResponse response) {
@@ -172,13 +163,7 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
                                     final String[] dialogTitle = {jsonMessage.getString(TITLE)};
 
                                     if (dialogTitle[0].equals("")) {
-                                        VKRequest request = VKApi.users().get(
-                                                VKParameters.from(
-                                                        VKApiConst.USER_ID,
-                                                        jsonMessage.getString(USER_ID)
-                                                )
-                                        );
-
+                                        VKRequest request = getUserInfoById(jsonMessage.getString(USER_ID));
                                         request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                                             @Override
                                             public void onComplete(VKResponse response) {
@@ -304,11 +289,7 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
         /**
          * Получение "count" последних сообщений диалога
          */
-        VKRequest request = new VKRequest(
-                GET_MESSAGES,
-                VKParameters.from(typeOfDialog, id, COUNT, AMOUNT_MESSAGES)
-        );
-
+        VKRequest request = getMessagesOfDialog(typeOfDialog, id);
         request.executeWithListener(new VKRequest.VKRequestListener() {
             @Override
             public void onComplete(VKResponse response) {
@@ -423,7 +404,7 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
             /**
              * Иначе через API VK
              */
-            VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, id, FIELDS, PHOTO_50));
+            VKRequest request = getUserInfoById(id);
             request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                 @Override
                 public void onComplete(VKResponse response) {
@@ -465,7 +446,7 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
 
             final String[] fwdMessageUser = {dbHelper.getFromUsersNicknameById(String.valueOf(fwdMessage.user_id))};
             if (fwdMessageUser[0] == null) {
-                VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, fwdMessage.user_id, FIELDS, PHOTO_50));
+                VKRequest request = getUserInfoById(String.valueOf(fwdMessage.user_id));
                 request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                     @Override
                     public void onComplete(VKResponse response) {

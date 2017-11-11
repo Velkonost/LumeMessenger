@@ -20,7 +20,6 @@ import com.squareup.picasso.Picasso;
 import com.velkonost.lume.R;
 import com.velkonost.lume.vkontakte.models.RoundImageView;
 import com.vk.sdk.api.VKError;
-import com.vk.sdk.api.VKParameters;
 import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
 import com.vk.sdk.api.model.VKList;
@@ -32,18 +31,15 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 import static com.velkonost.lume.Constants.DEBUG_TAG;
-import static com.velkonost.lume.vkontakte.Constants.API_METHODS.ADD_FRIEND;
-import static com.velkonost.lume.vkontakte.Constants.API_METHODS.DELETE_FRIEND;
-import static com.velkonost.lume.vkontakte.Constants.API_METHODS.SEARCH_USERS;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIELDS;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIRST_NAME;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ID;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.LAST_NAME;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.QUERY;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.ITEMS;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.PHOTO_50;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.RESPONSE;
-import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.USER_ID;
+import static com.velkonost.lume.vkontakte.VkApiHelper.addFriend;
+import static com.velkonost.lume.vkontakte.VkApiHelper.deleteFriend;
+import static com.velkonost.lume.vkontakte.VkApiHelper.searchUsers;
 
 /**
  * @author Velkonost
@@ -52,7 +48,6 @@ import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.USER_ID;
 public class SearchUsersAdapter extends RecyclerView.Adapter<SearchUsersAdapter.ViewHolder> {
 
     private Context ctx;
-    private VKList listFriends;
 
     private ArrayList usersNames;
     private ArrayList<String> usersPhotos;
@@ -64,7 +59,6 @@ public class SearchUsersAdapter extends RecyclerView.Adapter<SearchUsersAdapter.
 
     public SearchUsersAdapter(Context ctx, VKList listFriends) {
         this.ctx = ctx;
-        this.listFriends = listFriends;
 
         usersNames = new ArrayList();
         usersIds = new ArrayList();
@@ -135,7 +129,7 @@ public class SearchUsersAdapter extends RecyclerView.Adapter<SearchUsersAdapter.
                 @Override
                 public void onClick(View v) {
                     if (!friendsRequestsList.contains(userId)) {
-                        VKRequest searchRequest = new VKRequest(ADD_FRIEND, VKParameters.from(USER_ID, userId));
+                        VKRequest searchRequest = addFriend(userId);
                         searchRequest.executeWithListener(new VKRequest.VKRequestListener() {
                             @Override
                             public void onComplete(VKResponse response) {
@@ -145,7 +139,7 @@ public class SearchUsersAdapter extends RecyclerView.Adapter<SearchUsersAdapter.
                             }
                         });
                     } else {
-                        VKRequest searchRequest = new VKRequest(DELETE_FRIEND, VKParameters.from(USER_ID, userId));
+                        VKRequest searchRequest = deleteFriend(userId);
                         searchRequest.executeWithListener(new VKRequest.VKRequestListener() {
                             @Override
                             public void onComplete(VKResponse response) {
@@ -168,7 +162,7 @@ public class SearchUsersAdapter extends RecyclerView.Adapter<SearchUsersAdapter.
     }
 
     private void search(String query) {
-        VKRequest searchRequest = new VKRequest(SEARCH_USERS, VKParameters.from(QUERY, query, FIELDS, PHOTO_50));
+        VKRequest searchRequest = searchUsers(query);
         searchRequest.executeWithListener(new VKRequest.VKRequestListener() {
             @Override
             public void onComplete(VKResponse response) {

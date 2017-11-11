@@ -18,9 +18,6 @@ import com.velkonost.lume.vkontakte.activities.MessagesActivity;
 import com.velkonost.lume.vkontakte.db.DBHelper;
 import com.velkonost.lume.vkontakte.models.MessagesList;
 import com.velkonost.lume.vkontakte.models.RoundImageView;
-import com.vk.sdk.api.VKApi;
-import com.vk.sdk.api.VKApiConst;
-import com.vk.sdk.api.VKParameters;
 import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
 import com.vk.sdk.api.model.VKApiMessage;
@@ -34,16 +31,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
 
-import static com.velkonost.lume.vkontakte.Constants.API_METHODS.GET_MESSAGES;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.AMOUNT_MESSAGES;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.COUNT;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIELDS;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.START_MESSAGE_ID;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.CHAT_ID;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.ITEMS;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.PHOTO_50;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.RESPONSE;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.USER_ID;
+import static com.velkonost.lume.vkontakte.VkApiHelper.getMessagesOfDialog;
+import static com.velkonost.lume.vkontakte.VkApiHelper.getUserInfoById;
 
 /**
  * Адаптер сообщений диалога
@@ -132,10 +126,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                      */
                     final String[] senderNicknameTemp = new String[1];
 
-                    VKRequest request = new VKRequest(
-                            GET_MESSAGES,
-                            VKParameters.from(typeOfDialog, dialogId, COUNT, AMOUNT_MESSAGES, START_MESSAGE_ID, getLastMessageId())
-                    );
+                    VKRequest request = getMessagesOfDialog(typeOfDialog, dialogId, getLastMessageId());
                     request.executeWithListener(new VKRequest.VKRequestListener() {
                         @Override
                         public void onComplete(VKResponse response) {
@@ -326,7 +317,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
             final String[] fwdMessageUser = {dbHelper.getFromUsersNicknameById(String.valueOf(fwdMessage.user_id))};
             if (fwdMessageUser[0] == null) {
-                VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, fwdMessage.user_id, FIELDS, PHOTO_50));
+                VKRequest request = getUserInfoById(String.valueOf(fwdMessage.user_id));
                 request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                     @Override
                     public void onComplete(VKResponse response) {
@@ -390,7 +381,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             /**
              * Иначе через API VK
              */
-            VKRequest request = VKApi.users().get(VKParameters.from(VKApiConst.USER_ID, id, FIELDS, PHOTO_50));
+            VKRequest request = getUserInfoById(id);
             request.executeSyncWithListener(new VKRequest.VKRequestListener() {
                 @Override
                 public void onComplete(VKResponse response) {

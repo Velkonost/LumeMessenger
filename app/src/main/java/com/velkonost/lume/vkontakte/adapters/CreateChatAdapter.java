@@ -22,7 +22,6 @@ import com.velkonost.lume.vkontakte.activities.MainActivity;
 import com.velkonost.lume.vkontakte.activities.MessagesActivity;
 import com.velkonost.lume.vkontakte.models.RoundImageView;
 import com.vk.sdk.api.VKError;
-import com.vk.sdk.api.VKParameters;
 import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
 import com.vk.sdk.api.model.VKList;
@@ -31,7 +30,6 @@ import org.json.JSONException;
 
 import java.util.ArrayList;
 
-import static com.velkonost.lume.vkontakte.Constants.API_METHODS.CREATE_CHAT;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ID;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_BODIES_LISTS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.FWD_MESSAGES_DATES_LISTS;
@@ -41,10 +39,10 @@ import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_DATE
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_IDS;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_IS_OUT;
 import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_SENDERS;
+import static com.velkonost.lume.vkontakte.Constants.MESSAGES_DATA.MESSAGES_SENDERS_IDS;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.PHOTO_50;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.RESPONSE;
-import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.TITLE;
-import static com.vk.sdk.api.VKApiConst.USER_IDS;
+import static com.velkonost.lume.vkontakte.VkApiHelper.createNewChat;
 
 /**
  * @author Velkonost
@@ -76,7 +74,7 @@ public class CreateChatAdapter extends RecyclerView.Adapter<CreateChatAdapter.Vi
             userIdsStr += userIdsToInvite.get(i) + ",";
         }
 
-        VKRequest searchRequest = new VKRequest(CREATE_CHAT, VKParameters.from(TITLE, query, USER_IDS, userIdsStr));
+        VKRequest searchRequest = createNewChat(query, userIdsStr);
         searchRequest.executeWithListener(new VKRequest.VKRequestListener() {
             @Override
             public void onComplete(VKResponse response) {
@@ -92,6 +90,7 @@ public class CreateChatAdapter extends RecyclerView.Adapter<CreateChatAdapter.Vi
                             .putExtra(MESSAGES_IS_OUT, new ArrayList<>())
                             .putExtra(MESSAGES_DATES, new ArrayList<>())
                             .putExtra(MESSAGES_SENDERS, new ArrayList<>())
+                            .putExtra(MESSAGES_SENDERS_IDS, new ArrayList<>())
                             .putExtra(FWD_MESSAGES_BODIES_LISTS, new ArrayList<>())
                             .putExtra(FWD_MESSAGES_DATES_LISTS, new ArrayList<>())
                             .putExtra(FWD_MESSAGES_SENDERS_LISTS, new ArrayList<>())

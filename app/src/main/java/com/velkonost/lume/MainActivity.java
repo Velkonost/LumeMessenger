@@ -11,9 +11,7 @@ import com.vk.sdk.VKAccessToken;
 import com.vk.sdk.VKCallback;
 import com.vk.sdk.VKScope;
 import com.vk.sdk.VKSdk;
-import com.vk.sdk.api.VKApi;
 import com.vk.sdk.api.VKError;
-import com.vk.sdk.api.VKParameters;
 import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
 import com.vk.sdk.api.model.VKList;
@@ -21,13 +19,10 @@ import com.wang.avi.AVLoadingIndicatorView;
 
 import org.json.JSONException;
 
-import static com.velkonost.lume.Constants.COMMA;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIELDS;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.FIRST_NAME;
 import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.ID;
-import static com.velkonost.lume.vkontakte.Constants.API_PARAMETERS.LAST_NAME;
 import static com.velkonost.lume.vkontakte.Constants.RESPONSE_FIELDS.PHOTO_50;
 import static com.velkonost.lume.vkontakte.VkApiHelper.getAuthUserData;
+import static com.velkonost.lume.vkontakte.VkApiHelper.getFriends;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -132,9 +127,7 @@ public class MainActivity extends AppCompatActivity {
         /**
          * Получение информации о друзьях авторизованного пользователя
          */
-        final VKRequest requestFriends = VKApi.friends().get(
-                VKParameters.from(FIELDS, FIRST_NAME + COMMA + LAST_NAME + COMMA + ID + COMMA + PHOTO_50)
-        );
+        final VKRequest requestFriends = getFriends();
 
         requestFriends.executeWithListener(new VKRequest.VKRequestListener() {
             @Override
