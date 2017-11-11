@@ -4,7 +4,7 @@ package com.velkonost.lume.vkontakte.db;
  * @author Velkonost
  */
 
-class Constants {
+public class Constants {
     final class DB_TABLES {
         /**
          * Таблица пользователей
@@ -38,6 +38,6 @@ class Constants {
     /**
      * Название таблицы
      */
-    static final String DB_NAME = "lumeVkontaktedb";
+    public static final String DB_NAME = "lumeVkontaktedb";
 
 }

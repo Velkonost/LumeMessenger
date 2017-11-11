@@ -27,10 +27,10 @@ import com.baoyz.swipemenulistview.SwipeMenuItem;
 import com.baoyz.swipemenulistview.SwipeMenuListView;
 import com.velkonost.lume.R;
 import com.velkonost.lume.vkontakte.adapters.CreateChatAdapter;
-import com.velkonost.lume.vkontakte.adapters.CustomAdapter;
 import com.velkonost.lume.vkontakte.adapters.DialogsAdapter;
 import com.velkonost.lume.vkontakte.adapters.FriendsAdapter;
 import com.velkonost.lume.vkontakte.adapters.SearchUsersAdapter;
+import com.velkonost.lume.vkontakte.adapters.SettingsAdapter;
 import com.velkonost.lume.vkontakte.db.DBHelper;
 import com.vk.sdk.api.VKError;
 import com.vk.sdk.api.VKRequest;
@@ -736,7 +736,10 @@ public class MainActivity extends AppCompatActivity {
                     /**
                      * Вкладка настроек (?)
                      */
-                    recyclerView.setAdapter(new CustomAdapter(MainActivity.this));
+                    mListView.setVisibility(View.INVISIBLE);
+                    recyclerView.setVisibility(View.VISIBLE);
+
+                    recyclerView.setAdapter(new SettingsAdapter(MainActivity.this));
                 }
 
                 container.addView(view);
@@ -1053,7 +1056,10 @@ public class MainActivity extends AppCompatActivity {
                     /**
                      * Вкладка настроек (?)
                      */
-                    recyclerView.setAdapter(new CustomAdapter(MainActivity.this));
+                    mListView.setVisibility(View.INVISIBLE);
+                    recyclerView.setVisibility(View.VISIBLE);
+
+                    recyclerView.setAdapter(new SettingsAdapter(MainActivity.this));
                 }
 
                 container.addView(view);
@@ -1152,8 +1158,10 @@ public class MainActivity extends AppCompatActivity {
                     /**
                      * Вкладка настроек (?)
                      */
+                    mListView.setVisibility(View.INVISIBLE);
+                    recyclerView.setVisibility(View.VISIBLE);
 
-                    recyclerView.setAdapter(new CustomAdapter(MainActivity.this));
+                    recyclerView.setAdapter(new SettingsAdapter(MainActivity.this));
                 }
                 container.addView(view);
                 return view;
@@ -1229,8 +1237,10 @@ public class MainActivity extends AppCompatActivity {
                     /**
                      * Вкладка настроек (?)
                      */
+                    mListView.setVisibility(View.INVISIBLE);
+                    recyclerView.setVisibility(View.VISIBLE);
 
-                    recyclerView.setAdapter(new CustomAdapter(MainActivity.this));
+                    recyclerView.setAdapter(new SettingsAdapter(MainActivity.this));
                 }
                 container.addView(view);
                 return view;
