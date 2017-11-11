@@ -37,8 +37,7 @@ public class MainActivity extends AppCompatActivity {
         callbackManager = CallbackManager.Factory.create();
         lb = LoginManager.getInstance();
         fb_btn = (LoginButton) findViewById(R.id.login_button);
-        fb_btn.setReadPermissions("email");
-        fb_btn.setReadPermissions("","");
+        fb_btn.setReadPermissions("email","read_page_mailboxes");
 
 
         if(AccessToken.getCurrentAccessToken()!=null){

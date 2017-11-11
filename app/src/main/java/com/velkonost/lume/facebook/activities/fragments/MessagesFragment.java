@@ -1,6 +1,7 @@
 package com.velkonost.lume.facebook.activities.fragments;
 
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -11,6 +12,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.facebook.AccessToken;
+import com.facebook.FacebookSdk;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.HttpMethod;
 import com.instagram.instagramapi.engine.InstagramEngine;
 import com.instagram.instagramapi.exceptions.InstagramException;
 import com.instagram.instagramapi.interfaces.InstagramAPIResponseCallback;
@@ -54,7 +60,17 @@ public class MessagesFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.item_fb_main, null);
-
+        Log.d("xyi", FacebookSdk.getApplicationSignature(getContext()));
+        new GraphRequest(AccessToken.getCurrentAccessToken(),
+                "/me?fields=messages{message}",
+                null,
+                HttpMethod.GET,
+                new GraphRequest.Callback(){
+                    public void onCompleted(GraphResponse response){
+                        Log.d("xyi", response.toString());
+                        Log.d("xyi", AccessToken.getCurrentAccessToken().toString());
+                    }
+                }).executeAsync();
         return view;
     }
 
