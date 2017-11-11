@@ -13,8 +13,9 @@
         <ImageView
             android:layout_width="50dp"
             android:layout_height="50dp"
+            android:layout_marginLeft="10dp"
             android:layout_centerVertical="true"
-            android:src="@drawable/vk_dark"
+            android:src="@drawable/vk_grey"
             android:id="@+id/dialog_icon"/>
         <LinearLayout
             android:layout_toEndOf="@id/dialog_icon"

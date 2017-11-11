@@ -66,7 +66,7 @@ public class Constants {
         public static final String CHAT_ID = "chat_id";
         public static final String USER_ID = "user_id";
         public static final String USER_IDS = "user_ids";
-        public static final String PHOTO_50 = "photo_50";
+        public static final String PHOTO_50 = "photo_100";
         public static final String TITLE = "title";
         public static final String BODY = "body";
     }
@@ -83,11 +83,5 @@ public class Constants {
         public static final String FWD_MESSAGES_SENDERS_LISTS = "fwdMessagesDatesLists";
         public static final String FWD_MESSAGES_BODIES_LISTS = "fwdMessagesSendersLists";
     }
-
-
-
-
-
-
 
 }
