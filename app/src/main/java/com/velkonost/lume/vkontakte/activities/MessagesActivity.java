@@ -4,13 +4,16 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.velkonost.lume.R;
@@ -123,7 +126,7 @@ public class MessagesActivity extends AppCompatActivity {
     /**
      * Кнопка для отправки нового сообщения
      */
-    private Button btnSendNewMessage;
+    private ImageButton btnSendNewMessage;
 
     /**
      * Объект для хранения списков данных сообщений и их пересланных сообщений
@@ -146,6 +149,8 @@ public class MessagesActivity extends AppCompatActivity {
     private TextView fwdMessagesToSend;
     private ArrayList<String> fwdMessagesToSendList;
 
+    private int fwdMessagesToSendAmount;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -155,6 +160,7 @@ public class MessagesActivity extends AppCompatActivity {
         initializeMessages();
         id = getIntent().getStringExtra(ID);
         dbHelper = new DBHelper(this);
+        fwdMessagesToSendAmount = 0;
 
         ts = dbHelper.getValueFromMetaData(TS_MESSAGES);
         pts = dbHelper.getValueFromMetaData(PTS_MESSAGES);
@@ -162,7 +168,7 @@ public class MessagesActivity extends AppCompatActivity {
         fwdMessagesToSendList = new ArrayList<>();
         fwdMessagesToSend = (TextView) findViewById(R.id.fwd_messages);
         editNewMessage = (EditText) findViewById(R.id.editNewMessage);
-        btnSendNewMessage = (Button) findViewById(R.id.sendNewMessage);
+        btnSendNewMessage = (ImageButton) findViewById(R.id.sendNewMessage);
 
         recyclerView = (RecyclerView) findViewById(R.id.rv);
         setRecyclerViewConfiguration(recyclerView);
@@ -185,6 +191,8 @@ public class MessagesActivity extends AppCompatActivity {
                     fwdMessagesToSendStr += fwdMessagesToSendList.get(i) + ",";
                 }
                 fwdMessagesToSendList = new ArrayList<String>();
+                fwdMessagesToSendAmount = 0;
+                fwdMessagesToSend.setText("");
 
                 VKRequest request = new VKRequest(
                         SEND_MESSAGE,
@@ -204,6 +212,23 @@ public class MessagesActivity extends AppCompatActivity {
                     }
                 });
             }
+        });
+
+        editNewMessage.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() == 0) {
+                    btnSendNewMessage.setImageDrawable(ContextCompat.getDrawable(MessagesActivity.this, R.drawable.ic_send_empty));
+                } else {
+                    btnSendNewMessage.setImageDrawable(ContextCompat.getDrawable(MessagesActivity.this, R.drawable.ic_send));
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
         });
 
         new Handler().postDelayed(new Runnable() {
@@ -576,14 +601,16 @@ public class MessagesActivity extends AppCompatActivity {
     public void addFwdMessageToSend(String messageId) {
         if (!fwdMessagesToSendList.contains(messageId)) {
             fwdMessagesToSendList.add(messageId);
-            fwdMessagesToSend.setText(fwdMessagesToSendList.toString());
+            fwdMessagesToSendAmount++;
+            fwdMessagesToSend.setText(fwdMessagesToSendAmount + " пересланных сообщений");
         }
     }
 
     public void removeFwdMessageToSend(String messageId) {
         if (fwdMessagesToSendList.contains(messageId)) {
             fwdMessagesToSendList.remove(messageId);
-            fwdMessagesToSend.setText(fwdMessagesToSendList.toString());
+            fwdMessagesToSendAmount--;
+            fwdMessagesToSend.setText(fwdMessagesToSendAmount + " пересланных сообщений");
         }
     }
 

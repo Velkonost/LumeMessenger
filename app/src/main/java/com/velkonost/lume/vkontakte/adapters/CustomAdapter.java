@@ -57,8 +57,8 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
 
         public ViewHolder(final View itemView) {
             super(itemView);
-            txt = (TextView) itemView.findViewById(R.id.txt_vp_item_list);
-            txt2 = (TextView) itemView.findViewById(R.id.txt_vp_item_list2);
+            txt = (TextView) itemView.findViewById(R.id.dialog_title);
+            txt2 = (TextView) itemView.findViewById(R.id.dialog_last_message);
         }
     }
     ///

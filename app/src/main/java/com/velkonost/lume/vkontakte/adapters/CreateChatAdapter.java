@@ -2,12 +2,15 @@ package com.velkonost.lume.vkontakte.adapters;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -129,6 +132,24 @@ public class CreateChatAdapter extends RecyclerView.Adapter<CreateChatAdapter.Vi
                     createChat(queryStr);
                 }
             });
+
+            holder.chatNameEdit.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    if (s.length() == 0) {
+                        holder.createChatBtn.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_create_chat_empty));
+                    } else {
+                        holder.createChatBtn.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_create_chat));
+                    }
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {}
+            });
+
         } else {
 
             try {
@@ -203,7 +224,7 @@ public class CreateChatAdapter extends RecyclerView.Adapter<CreateChatAdapter.Vi
 
         LinearLayout chatNameWrap;
         EditText chatNameEdit;
-        Button createChatBtn;
+        ImageButton createChatBtn;
 
         ImageView addParticipant;
 
@@ -216,7 +237,7 @@ public class CreateChatAdapter extends RecyclerView.Adapter<CreateChatAdapter.Vi
 
             chatNameWrap = (LinearLayout) itemView.findViewById(R.id.chat_name_wrap);
             chatNameEdit = (EditText) itemView.findViewById(R.id.edit_chat_name);
-            createChatBtn = (Button) itemView.findViewById(R.id.create_chat);
+            createChatBtn = (ImageButton) itemView.findViewById(R.id.create_chat);
 
             addParticipant = (ImageView) itemView.findViewById(R.id.add_participant);
         }

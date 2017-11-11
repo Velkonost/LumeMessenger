@@ -586,8 +586,8 @@ public class DialogsAdapter extends RecyclerView.Adapter<DialogsAdapter.ViewHold
             } else {
                 dialogBlock = (LinearLayout) itemView.findViewById(R.id.dialog_block);
 
-                dialogName = (TextView) itemView.findViewById(R.id.txt_vp_item_list);
-                lastMessage = (TextView) itemView.findViewById(R.id.txt_vp_item_list2);
+                dialogName = (TextView) itemView.findViewById(R.id.dialog_title);
+                lastMessage = (TextView) itemView.findViewById(R.id.dialog_last_message);
 
                 dialogPhoto = (ImageView) itemView.findViewById(R.id.dialog_icon);
             }

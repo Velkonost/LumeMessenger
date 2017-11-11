@@ -1,13 +1,16 @@
 package com.velkonost.lume.vkontakte.adapters;
 
 import android.content.Context;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -93,6 +96,23 @@ public class SearchUsersAdapter extends RecyclerView.Adapter<SearchUsersAdapter.
                     queryStr = holder.searchUsersEdit.getText().toString();
                     search(queryStr);
                 }
+            });
+
+            holder.searchUsersEdit.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    if (s.length() == 0) {
+                        holder.searchUsersBtn.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_magnify_empty));
+                    } else {
+                        holder.searchUsersBtn.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_magnify));
+                    }
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {}
             });
         } else {
             final String userId = String.valueOf(usersIds.get(position - 1));
@@ -212,7 +232,7 @@ public class SearchUsersAdapter extends RecyclerView.Adapter<SearchUsersAdapter.
 
         LinearLayout searchUsersWrap;
         EditText searchUsersEdit;
-        Button searchUsersBtn;
+        ImageButton searchUsersBtn;
 
 
         ViewHolder(final View itemView) {
@@ -224,7 +244,7 @@ public class SearchUsersAdapter extends RecyclerView.Adapter<SearchUsersAdapter.
 
             searchUsersWrap = (LinearLayout) itemView.findViewById(R.id.search_users_wrap);
             searchUsersEdit = (EditText) itemView.findViewById(R.id.search_users);
-            searchUsersBtn = (Button) itemView.findViewById(R.id.go_search_users);
+            searchUsersBtn = (ImageButton) itemView.findViewById(R.id.go_search_users);
 
             sendFriendRequest = (ImageView) itemView.findViewById(R.id.send_request);
         }

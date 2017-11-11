@@ -3,7 +3,7 @@
               android:orientation="vertical"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:background="@color/vk_share_blue_color">
+              android:background="@color/colorLightGrey">
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/rv"
@@ -15,24 +15,47 @@
         android:clipChildren="false"
         android:layout_weight="10"/>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@color/colorGrey">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_weight="1">
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxHeight="60dp"
+                android:id="@+id/editNewMessage"
+                android:typeface="monospace"
+                android:background="@android:color/transparent"
+                android:textColor="@color/vk_white"
+                android:textCursorDrawable="@null"
+                android:paddingLeft="20dp"
+                android:layout_weight="1"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="20dp"
+                android:typeface="monospace"
+                android:background="@color/colorGrey"
+                android:textColor="@color/vk_white"
+                android:paddingLeft="20dp"
+                android:layout_weight="1"
+                android:id="@+id/fwd_messages"/>
+        </LinearLayout>
+        <ImageButton
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_weight="4"
+            android:background="@android:color/transparent"
+            android:id="@+id/sendNewMessage"
+            android:src="@drawable/ic_send_empty"/>
+    </LinearLayout>
 
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/editNewMessage"
-        android:typeface="monospace"
-        android:textColor="@color/colorTextBlack"
-        android:layout_weight="1"/>
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:id="@+id/sendNewMessage"
-        android:text="Send"/>
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:typeface="monospace"
-        android:textColor="@color/colorTextBlack"
-        android:id="@+id/fwd_messages"/>
 </LinearLayout>
